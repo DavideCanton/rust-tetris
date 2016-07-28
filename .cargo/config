@@ -1,0 +1,7 @@
+[target.i686-pc-windows-msvc.freetype]
+rustc-link-search = ["C:\\Users\\Davide\\libs\\binaries-master\\i686"]
+rustc-link-lib = ["freetype"]
+
+[target.x86_64-pc-windows-msvc.freetype]
+rustc-link-search = ["C:\\Users\\Davide\\libs\\binaries-master\\x86_64"]
+rustc-link-lib = ["freetype"]

@@ -1,0 +1,10 @@
+[package]
+name = "rust-tetris"
+version = "0.1.0"
+authors = ["Kami <davide.canton5@gmail.com>"]
+
+[dependencies]
+piston = "^0.24.0"
+piston2d-graphics = "^0.16.0"
+pistoncore-glutin_window = "^0.28.0"
+piston2d-opengl_graphics = "^0.31.0"
