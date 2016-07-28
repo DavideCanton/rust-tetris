@@ -6,6 +6,7 @@ extern crate glutin_window;
 extern crate opengl_graphics;
 
 mod board;
+mod pieces;
 
 use piston::window::WindowSettings;
 use piston::event_loop::*;
