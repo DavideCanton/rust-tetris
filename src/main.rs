@@ -5,6 +5,9 @@ extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
 
+#[macro_use] extern crate enum_primitive;
+extern crate num;
+
 mod board;
 mod pieces;
 
