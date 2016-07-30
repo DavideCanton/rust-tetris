@@ -1,12 +1,17 @@
 #![allow(dead_code)]
+#![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 extern crate piston;
 extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
 
+#[macro_use] extern crate enum_primitive;
+extern crate num;
+
 mod board;
 mod pieces;
+mod utils;
 
 use piston::window::WindowSettings;
 use piston::event_loop::*;
@@ -14,15 +19,19 @@ use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use board::TetrisBoard;
+use pieces::*;
+use utils::*;
 
-type F32_4 = [f32; 4];
-const BLACK: F32_4 = [0.0, 0.0, 0.0, 1.0];
-const YELLOW: F32_4 = [1.0, 1.0, 0.0, 1.0];
+
 const WIDTH: f64 = 30.0;
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     board: TetrisBoard,
+    r: usize, // current piece row
+    c: usize, // current piece col
+    pieceMatrix: Option<TetrisBoard>, // piece matrix
+    pieceType: Option<TetrisPiece> // piece type
 }
 
 
@@ -33,16 +42,20 @@ impl App {
         let board = &self.board;
 
         self.gl.draw(args.viewport(), |c, gl| {
-            clear(BLACK, gl);
+            clear(BGCOLOR, gl);
 
             for i in 0..board.rows {
                 for j in 0..board.cols {
-                    if board.is_set(i, j) {
+
+                    let p = board.get(i, j);
+
+                    if let Some(piece) = p {
                         let i = i as f64;
                         let j = j as f64;
 
-                        let square = rectangle::square(i * WIDTH, j * WIDTH, WIDTH);
-                        rectangle(YELLOW, square, c.transform, gl);
+                        let square = rectangle::square(j * WIDTH, i * WIDTH, WIDTH);
+                        let color = piece_to_color(piece);
+                        rectangle(color, square, c.transform, gl);
                     }
                 }
             }
@@ -68,9 +81,16 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         board: TetrisBoard::new(20, 10),
+        r: 0,
+        c: 0,
+        pieceType: None,
+        pieceMatrix: None
     };
 
-    app.board.set(5, 5);
+    app.board.set(0,0,TetrisPiece::S);
+    app.board.set(0,1,TetrisPiece::S);
+    app.board.set(1,1,TetrisPiece::S);
+    app.board.set(1,2,TetrisPiece::S);
 
     let mut events = window.events();
     while let Some(e) = events.next(&mut window) {
