@@ -6,10 +6,10 @@ pub const BLACK: F32_4 = [0.0, 0.0, 0.0, 1.0];
 pub const YELLOW: F32_4 = [1.0, 1.0, 0.0, 1.0];
 pub const RED: F32_4 = [1.0, 0.0, 0.0, 1.0];
 pub const BLUE: F32_4 = [0.0, 0.0, 1.0, 1.0];
-pub const LIGHTBLUE: F32_4 = [0.0, 0.0, 1.0, 1.0]; // TODO
+pub const LIGHTBLUE: F32_4 = [0.0, 0.0, 0.6, 1.0]; // TODO
 pub const GREEN: F32_4 = [0.0, 1.0, 0.0, 1.0];
-pub const ORANGE: F32_4 = [1.0, 0.6, 0.0, 1.0]; // TODO
-pub const PURPLE: F32_4 = [1.0, 0.0, 1.0, 1.0]; // TODO
+pub const ORANGE: F32_4 = [1.0, 0.6, 0.0, 1.0];
+pub const PURPLE: F32_4 = [1.0, 0.0, 1.0, 1.0];
 
 pub const BGCOLOR : F32_4 = BLACK;
 pub const O_COLOR : F32_4 = YELLOW;
