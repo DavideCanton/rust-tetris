@@ -165,7 +165,9 @@ fn get_rotations_T(rotation: PieceRotation) -> &'static str {
     }
 }
 
+
 #[cfg(test)]
+#[allow(non_snake_case)]
 mod tests {
     use super::{get_piece_size, get_piece_matrix, fill_piece_matrix, next_rotation};
     use super::{TetrisPiece, PieceRotation};
@@ -225,15 +227,15 @@ mod tests {
         let mut rotation = PieceRotation::UP;
 
         for _ in 0..5 {
-            assert!(matrix.len() == 2 && matrix[0].len() == 2);
+            assert!(matrix.rows == 2 && matrix.cols == 2);
 
             rotation = next_rotation(rotation);
             fill_piece_matrix(TetrisPiece::O, &mut matrix, rotation);
 
-            assert!(matrix[0][0].is_some());
-            assert!(matrix[0][1].is_some());
-            assert!(matrix[1][0].is_some());
-            assert!(matrix[1][1].is_some());
+            assert!(matrix.get(0,0).is_some());
+            assert!(matrix.get(1,0).is_some());
+            assert!(matrix.get(0,1).is_some());
+            assert!(matrix.get(1,1).is_some());
         }
     }
 }
