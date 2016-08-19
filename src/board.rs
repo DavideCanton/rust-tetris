@@ -1,4 +1,5 @@
 use pieces::TetrisPiece;
+use utils::range_inclusive;
 
 pub type TetrisCell = Option<TetrisPiece>;
 
@@ -45,11 +46,76 @@ impl TetrisBoard {
         self.data[i][j] = b;
     }
 
-    pub fn rows<'a>(&'a self) -> Box<Iterator<Item=&'a Vec<TetrisCell>> + 'a> {
+    pub fn is_complete(&self, i: usize) -> bool {
+        self.data[i].iter().all(|cell| cell.is_some())
+    }
+
+    pub fn remove_completed_rows(&mut self, last_to_copy: Option<usize>)
+    {
+        let mut ranges = vec![];
+
+        let mut from = None;
+        let mut to = None;
+
+        for i in range_inclusive(self.data.len() as isize - 1, 0, -1) {
+
+            let i = i as usize;
+
+            if self.is_complete(i) {
+                if from.is_none() {
+                    from = Some(i);
+                } else if to.is_none() {
+                    to = Some(i);
+                }
+            } else {
+                ranges.push((from.unwrap(), to.unwrap()));
+                from = None;
+                to = None;
+            }
+        }
+
+        for range in ranges {
+            self.remove_rows(range.0, range.1, last_to_copy);
+        }
+    }
+
+    pub fn rows<'a>(&'a self) -> Box<Iterator<Item = &'a Vec<TetrisCell>> + 'a> {
         Box::new(self.data.iter())
     }
 
-    pub fn rows_mut<'a>(&'a mut self) -> Box<Iterator<Item=&'a mut Vec<TetrisCell>> + 'a> {
+    pub fn rows_mut<'a>(&'a mut self) -> Box<Iterator<Item = &'a mut Vec<TetrisCell>> + 'a> {
         Box::new(self.data.iter_mut())
+    }
+
+    pub fn remove_rows(&mut self, from: usize, to: usize, last_to_copy: Option<usize>) {
+        let offset = to - from;
+
+        if offset == 0 {
+            return;
+        }
+
+        let last_to_copy = last_to_copy.unwrap_or(offset);
+
+        for i in (to - 1)..last_to_copy {
+            self.data.swap(i, i - offset);
+        }
+
+        for i in last_to_copy..(last_to_copy - offset) {
+            self.data[i] = self.empty_row_proto.clone();
+        }
+    }
+}
+
+#[cfg(test)]
+#[allow(non_snake_case)]
+mod tests {
+    use super::TetrisBoard;
+    use pieces::TetrisPiece;
+
+    #[test]
+    fn test_remove_rows() {
+        let mut board = TetrisBoard::new(5, 3);
+
+        board.set(4, 0, TetrisPiece::O);
     }
 }
