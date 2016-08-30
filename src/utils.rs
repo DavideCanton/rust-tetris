@@ -33,7 +33,7 @@ pub fn piece_to_color(p: TetrisPiece) -> F32_4 {
     }
 }
 
-pub struct MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy {
+pub struct MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
     start: T,
     end: T,
     step: T,
@@ -41,7 +41,7 @@ pub struct MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy {
     done: bool,
 }
 
-pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy {
+pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
     MyInclusiveRange {
         done: false,
         start: start,
@@ -51,7 +51,29 @@ pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T> wher
     }
 }
 
-impl<T> Iterator for MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy {
+impl<T> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
+    fn is_ascending(&self) -> bool {
+        self.start + self.step > self.start
+    }
+
+    fn is_done(&self) -> bool {
+        if self.is_ascending() {
+            self.cur >= self.end
+        } else {
+            self.cur <= self.end
+        }
+    }
+
+    fn is_valid(&self, val: T) -> bool {
+        if self.is_ascending() {
+            val >= self.start && val <= self.end
+        } else {
+            val <= self.start && val >= self.end
+        }
+    }
+}
+
+impl<T> Iterator for MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
@@ -59,12 +81,18 @@ impl<T> Iterator for MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy {
             None
         } else {
             let val = self.cur;
-            if self.cur == self.end {
+
+            if self.is_done() {
                 self.done = true;
             } else {
                 self.cur = self.cur + self.step;
             }
-            Some(val)
+
+            if self.is_valid(val) {
+                Some(val)
+            } else {
+                None
+            }
         }
     }
 }
@@ -78,6 +106,12 @@ mod tests {
     fn test_range() {
         let v: Vec<_> = range_inclusive(0, 5, 1).collect();
         assert_eq!(&v[..], [0, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_range_step_2() {
+        let v: Vec<_> = range_inclusive(0, 5, 2).collect();
+        assert_eq!(&v[..], [0, 2, 4]);
     }
 
     #[test]
