@@ -199,35 +199,34 @@ impl PieceInfo {
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod tests {
-    use super::{get_piece_size, get_piece_matrix, fill_piece_matrix, next_rotation};
-    use super::{TetrisPiece, PieceRotation};
+    use super::{TetrisPiece, PieceRotation, PieceInfo};
 
     #[test]
     fn test_get_piece_size() {
-        let (w, h) = get_piece_size(TetrisPiece::T);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::T);
 
         assert!(w == 2 && h == 3);
 
-        let (w, h) = get_piece_size(TetrisPiece::I);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::I);
 
         assert!(w == 1 && h == 4);
 
-        let (w, h) = get_piece_size(TetrisPiece::S);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::S);
 
         assert!(w == 2 && h == 3);
-        let (w, h) = get_piece_size(TetrisPiece::Z);
-
-        assert!(w == 2 && h == 3);
-
-        let (w, h) = get_piece_size(TetrisPiece::J);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::Z);
 
         assert!(w == 2 && h == 3);
 
-        let (w, h) = get_piece_size(TetrisPiece::L);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::J);
 
         assert!(w == 2 && h == 3);
 
-        let (w, h) = get_piece_size(TetrisPiece::O);
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::L);
+
+        assert!(w == 2 && h == 3);
+
+        let (w, h) = PieceInfo::get_piece_size(TetrisPiece::O);
 
         assert!(w == 2 && h == 2);
     }
@@ -237,35 +236,33 @@ mod tests {
         let mut rotation = PieceRotation::UP;
 
         assert_eq!(rotation, PieceRotation::UP);
-        rotation = next_rotation(rotation);
+        rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::LEFT);
-        rotation = next_rotation(rotation);
+        rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::DOWN);
-        rotation = next_rotation(rotation);
+        rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::RIGHT);
-        rotation = next_rotation(rotation);
+        rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::UP);
     }
 
     #[test]
     fn test_fill_matrix_O() {
-        let mut matrix = get_piece_matrix(TetrisPiece::O);
-        let mut rotation = PieceRotation::UP;
+        let mut info = PieceInfo::new(TetrisPiece::O);
 
         for _ in 0..5 {
-            assert!(matrix.rows == 2 && matrix.cols == 2);
+            assert!(info.board.rows == 2 && info.board.cols == 2);
 
-            rotation = next_rotation(rotation);
-            fill_piece_matrix(TetrisPiece::O, &mut matrix, rotation);
+            info.rotate_piece();
 
-            assert!(matrix.get(0,0).is_some());
-            assert!(matrix.get(1,0).is_some());
-            assert!(matrix.get(0,1).is_some());
-            assert!(matrix.get(1,1).is_some());
+            assert!(info.board.get(0,0).is_some());
+            assert!(info.board.get(1,0).is_some());
+            assert!(info.board.get(0,1).is_some());
+            assert!(info.board.get(1,1).is_some());
         }
     }
 }
