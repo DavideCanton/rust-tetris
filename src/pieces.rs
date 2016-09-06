@@ -25,143 +25,173 @@ enum_from_primitive! {
     }
 }
 
-pub fn next_rotation(rotation: PieceRotation) -> PieceRotation {
-    let mut i = rotation as u8;
-    i = (i + 1) % 4;
-    PieceRotation::from_u8(i).unwrap()
+pub struct PieceInfo {
+    pub piece: TetrisPiece,
+    pub board: TetrisBoard,
+    pub rotation: PieceRotation
 }
 
-pub fn get_piece_size(piece: TetrisPiece) -> (usize, usize) {
-    match piece {
-        TetrisPiece::I => (1, 4),
-        TetrisPiece::O => (2, 2),
-        _ => (2, 3)
+impl PieceInfo {
+    pub fn new(piece: TetrisPiece) -> Self {
+        let mut pi = PieceInfo {
+            piece: piece,
+            rotation: PieceRotation::UP,
+            board: TetrisBoard::new(0, 0)
+        };
+
+        pi.setup_board();
+
+        pi
     }
-}
 
-pub fn get_piece_matrix(piece: TetrisPiece) -> TetrisBoard {
-    let (r, c) = get_piece_size(piece);
-    let max_size = max(r, c);
+    fn setup_board(&mut self) {
+        self.board = PieceInfo::get_piece_matrix(self.piece, self.rotation);
+    }
 
-    let mut matrix = TetrisBoard::new(max_size, max_size);
+    pub fn rotate_piece(&mut self) {
+        self.rotation = PieceInfo::next_rotation(self.rotation);
+        self.setup_board();
+    }
 
-    fill_piece_matrix(piece, &mut matrix, PieceRotation::UP);
+    pub fn collides_on_next(&self, r: usize, c: usize, matrix: &TetrisBoard) -> bool {
+        let w = self.board.cols;
+        let h = self.board.rows;
 
-    matrix
-}
+        for i in 0..h {
+            for j in 0..w {
+                let pcell = self.board.is_set(i, j);
+                let mcell = matrix.is_set(r + i, j + c);
 
-pub fn collides_on_next(piece: &TetrisBoard, r: usize, c: usize, matrix: &TetrisBoard) -> bool {
-    let w = piece.cols;
-    let h = piece.rows;
+                if pcell && mcell {
+                    panic!("Piece overlapping matrix!");
+                }
 
-    for i in 0..h {
-        for j in 0..w {
-            let pcell = piece.is_set(i, j);
-            let mcell = matrix.is_set(r + i, j + c);
+                if pcell && r + i == matrix.rows - 1 {
+                    return true;
+                }
 
-            if pcell && mcell {
-                panic!("Piece overlapping matrix!");
+                let mncell = matrix.is_set(r + i + 1, j + c);
+
+                if pcell && mncell {
+                    return true;
+                }
             }
+        }
 
-            if pcell && r + i == matrix.rows - 1 {
-                return true;
-            }
+        false
+    }
 
-            let mncell = matrix.is_set(r + i + 1, j + c);
 
-            if pcell && mncell {
-                return true;
+    fn get_piece_matrix(piece: TetrisPiece, rotation: PieceRotation) -> TetrisBoard {
+        let (r, c) = PieceInfo::get_piece_size(piece);
+        let max_size = max(r, c);
+
+        let mut matrix = TetrisBoard::new(max_size, max_size);
+
+        PieceInfo::fill_piece_matrix(piece, &mut matrix, rotation);
+
+        matrix
+    }
+
+    fn next_rotation(rotation: PieceRotation) -> PieceRotation {
+        let mut i = rotation as u8;
+        i = (i + 1) % 4;
+        PieceRotation::from_u8(i).unwrap()
+    }
+
+    fn get_piece_size(piece: TetrisPiece) -> (usize, usize) {
+        match piece {
+            TetrisPiece::I => (1, 4),
+            TetrisPiece::O => (2, 2),
+            _ => (2, 3)
+        }
+    }
+
+    pub fn fill_piece_matrix(piece: TetrisPiece, matrix: &mut TetrisBoard, rotation: PieceRotation) {
+        let matrix_str = match piece {
+            // O can't rotate
+            TetrisPiece::O => PieceInfo::get_rotations_O(),
+
+            // I, S, Z have only two rotations
+            TetrisPiece::I => PieceInfo::get_rotations_I(rotation),
+
+            TetrisPiece::Z => PieceInfo::get_rotations_Z(rotation),
+
+            TetrisPiece::S => PieceInfo::get_rotations_S(rotation),
+
+            // J,L,T have four rotations
+            TetrisPiece::J => PieceInfo::get_rotations_J(rotation),
+
+            TetrisPiece::L => PieceInfo::get_rotations_L(rotation),
+
+            TetrisPiece::T => PieceInfo::get_rotations_T(rotation)
+        };
+
+        for (row, row_vec) in matrix_str.split('|').zip(matrix.rows_mut()) {
+            for (c, col) in row.chars().zip(row_vec.iter_mut()) {
+                let b = match c {
+                    '0' => None,
+                    '1' => Some(piece),
+                    _ => panic!()
+                };
+
+                *col = b;
             }
         }
     }
 
-    false
-}
+    fn get_rotations_O() -> &'static str {
+        "11|11"
+    }
 
-pub fn fill_piece_matrix(piece: TetrisPiece, matrix: &mut TetrisBoard, rotation: PieceRotation) {
-    let matrix_str = match piece {
-        // O can't rotate
-        TetrisPiece::O => get_rotations_O(),
-
-        // I, S, Z have only two rotations
-        TetrisPiece::I => get_rotations_I(rotation),
-
-        TetrisPiece::Z => get_rotations_Z(rotation),
-
-        TetrisPiece::S => get_rotations_S(rotation),
-
-        // J,L,T have four rotations
-        TetrisPiece::J => get_rotations_J(rotation),
-
-        TetrisPiece::L => get_rotations_L(rotation),
-
-        TetrisPiece::T => get_rotations_T(rotation)
-    };
-
-    for (row, row_vec) in matrix_str.split('|').zip(matrix.rows_mut()) {
-        for (c, col) in row.chars().zip(row_vec.iter_mut()) {
-            let b = match c {
-                '0' => None,
-                '1' => Some(piece),
-                _ => panic!()
-            };
-
-            *col = b;
+    fn get_rotations_I(rotation: PieceRotation) -> &'static str {
+        match rotation {
+            PieceRotation::UP | PieceRotation::DOWN => "0010|0010|0010|0010",
+            PieceRotation::LEFT | PieceRotation::RIGHT => "0000|1111|0000|0000",
         }
     }
-}
 
-fn get_rotations_O() -> &'static str {
-    "11|11"
-}
-
-fn get_rotations_I(rotation: PieceRotation) -> &'static str {
-    match rotation {
-        PieceRotation::UP | PieceRotation::DOWN => "0010|0010|0010|0010",
-        PieceRotation::LEFT | PieceRotation::RIGHT => "0000|1111|0000|0000",
+    fn get_rotations_Z(rotation: PieceRotation) -> &'static str
+    {
+        match rotation {
+            PieceRotation::UP | PieceRotation::DOWN => "010|110|100",
+            PieceRotation::LEFT | PieceRotation::RIGHT => "000|110|011",
+        }
     }
-}
 
-fn get_rotations_Z(rotation: PieceRotation) -> &'static str
-{
-    match rotation {
-        PieceRotation::UP | PieceRotation::DOWN => "010|110|100",
-        PieceRotation::LEFT | PieceRotation::RIGHT => "000|110|011",
+    fn get_rotations_S(rotation: PieceRotation) -> &'static str
+    {
+        match rotation {
+            PieceRotation::UP | PieceRotation::DOWN => "010|011|001",
+            PieceRotation::LEFT | PieceRotation::RIGHT => "000|011|110",
+        }
     }
-}
 
-fn get_rotations_S(rotation: PieceRotation) -> &'static str
-{
-    match rotation {
-        PieceRotation::UP | PieceRotation::DOWN => "010|011|001",
-        PieceRotation::LEFT | PieceRotation::RIGHT => "000|011|110",
+    fn get_rotations_J(rotation: PieceRotation) -> &'static str {
+        match rotation {
+            PieceRotation::UP => "010|010|110",
+            PieceRotation::LEFT => "000|111|001",
+            PieceRotation::DOWN => "011|010|010",
+            PieceRotation::RIGHT => "000|100|111"
+        }
     }
-}
 
-fn get_rotations_J(rotation: PieceRotation) -> &'static str {
-    match rotation {
-        PieceRotation::UP => "010|010|110",
-        PieceRotation::LEFT => "000|111|001",
-        PieceRotation::DOWN => "011|010|010",
-        PieceRotation::RIGHT => "000|100|111"
+    fn get_rotations_L(rotation: PieceRotation) -> &'static str {
+        match rotation {
+            PieceRotation::UP => "010|010|011",
+            PieceRotation::LEFT => "000|001|111",
+            PieceRotation::DOWN => "110|010|010",
+            PieceRotation::RIGHT => "000|111|100"
+        }
     }
-}
 
-fn get_rotations_L(rotation: PieceRotation) -> &'static str {
-    match rotation {
-        PieceRotation::UP => "010|010|011",
-        PieceRotation::LEFT => "000|001|111",
-        PieceRotation::DOWN => "110|010|010",
-        PieceRotation::RIGHT => "000|111|100"
-    }
-}
-
-fn get_rotations_T(rotation: PieceRotation) -> &'static str {
-    match rotation {
-        PieceRotation::UP => "010|111|000",
-        PieceRotation::LEFT => "010|110|010",
-        PieceRotation::DOWN => "000|111|010",
-        PieceRotation::RIGHT => "010|011|010"
+    fn get_rotations_T(rotation: PieceRotation) -> &'static str {
+        match rotation {
+            PieceRotation::UP => "010|111|000",
+            PieceRotation::LEFT => "010|110|010",
+            PieceRotation::DOWN => "000|111|010",
+            PieceRotation::RIGHT => "010|011|010"
+        }
     }
 }
 
