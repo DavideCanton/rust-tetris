@@ -33,9 +33,9 @@ pub struct App {
     gl: GlGraphics,
     board: TetrisBoard,
     // current piece row
-    r: usize,
+    r: isize,
     // current piece col
-    c: usize,
+    c: isize,
     // piece matrix
     piece: Option<PieceInfo>,
     rng: rand::ThreadRng,
@@ -50,8 +50,8 @@ impl App {
 
         let board = &self.board;
         let pieceMOpt = &self.piece;
-        let r = self.r;
-        let c = self.c;
+        let r = self.r as isize;
+        let c = self.c as isize;
 
         self.gl.draw(args.viewport(), |ctx, gl| {
             clear(BGCOLOR, gl);
@@ -61,7 +61,7 @@ impl App {
                     let p = board.get(i, j);
 
                     if let Some(piece) = p {
-                        draw_piece_block(i, j, piece, &ctx, gl);
+                        draw_piece_block(i as isize, j as isize, piece, &ctx, gl);
                     }
                 }
             }
@@ -73,10 +73,13 @@ impl App {
                     for j in 0..pieceM.cols {
                         let p = pieceM.get(i, j);
 
-                        if let Some(piece) = p {
-                            let v = j.wrapping_add(c);
+                        let i = i as isize;
+                        let j = j as isize;
 
-                            if v >= 0 && v < board.cols {
+                        if let Some(piece) = p {
+                            let v = j + c;
+
+                            if v >= 0 && v < board.cols as isize {
                                 draw_piece_block(i + r, v, piece, &ctx, gl);
                             }
                         }
@@ -89,17 +92,46 @@ impl App {
     fn update(&mut self, args: &UpdateArgs) {
         self.time += args.dt;
 
-        if self.time - self.last_movement >= 1.0 {
+        if self.time - self.last_movement >= 0.1 {
             self.r += 1;
             self.last_movement = self.time;
+
+            if self.piece.as_ref().unwrap().collides_on_next(self.r, self.c, &self.board) {
+                self.board.finalize(self.piece.as_ref().unwrap(), self.r as usize, self.c as usize);
+                self.spawn_random_block();
+            }
         }
     }
 
     fn process_keys(&mut self, args: &Button) {
         match *args {
-            Button::Keyboard(Key::Left) => self.c = self.c.wrapping_sub(1),
-            Button::Keyboard(Key::Right) => self.c = self.c.wrapping_add(1),
-            Button::Keyboard(Key::Space) => self.piece.as_mut().unwrap().rotate_piece(),
+            Button::Keyboard(Key::Left) => {
+                let first_col = self.piece.as_ref().unwrap().board.get_first_set_col().unwrap() as isize;
+
+                if self.c + first_col > 0 {
+                    self.c -= 1;
+                }
+            },
+            Button::Keyboard(Key::Right) => {
+                let last_col = self.piece.as_ref().unwrap().board.get_last_set_col().unwrap() as isize;
+
+                if self.c + last_col < (self.board.cols as isize) - 1 {
+                    self.c += 1;
+                }
+            },
+            Button::Keyboard(Key::Space) => {
+                self.piece.as_mut().unwrap().rotate_piece();
+
+                let c = self.c as isize;
+                let first_col = self.piece.as_ref().unwrap().board.get_first_set_col().unwrap() as isize;
+                let last_col = self.piece.as_ref().unwrap().board.get_last_set_col().unwrap() as isize;
+
+                if c + first_col <= 0 {
+                    self.c += -(c + first_col);
+                } else if c + last_col >= (self.board.cols as isize) - 1 {
+                    self.c -= c + last_col - self.board.cols as isize + 1;
+                }
+            }
             _ => {}
         }
     }
@@ -107,13 +139,14 @@ impl App {
     fn spawn_random_block(&mut self) {
         let n = self.rng.gen_range(0, 7);
         let piece = TetrisPiece::from_u8(n).unwrap();
-
+        self.r = 0;
+        self.c = 0;
         self.piece = Some(PieceInfo::new(piece));
     }
 }
 
 
-fn draw_piece_block(i: usize, j: usize, piece: TetrisPiece, c: &graphics::Context, gl: &mut GlGraphics) {
+fn draw_piece_block(i: isize, j: isize, piece: TetrisPiece, c: &graphics::Context, gl: &mut GlGraphics) {
     use graphics::*;
 
     let i = i as f64;

@@ -53,24 +53,28 @@ impl PieceInfo {
         self.setup_board();
     }
 
-    pub fn collides_on_next(&self, r: usize, c: usize, matrix: &TetrisBoard) -> bool {
+    pub fn collides_on_next(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
         let w = self.board.cols;
         let h = self.board.rows;
 
         for i in 0..h {
             for j in 0..w {
-                let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(r + i, j + c);
+
+                let i = i as isize;
+                let j = j as isize;
+
+                let pcell = self.board.is_set_i(i, j);
+                let mcell = matrix.is_set_i(r + i, j + c);
 
                 if pcell && mcell {
                     panic!("Piece overlapping matrix!");
                 }
 
-                if pcell && r + i == matrix.rows - 1 {
+                if pcell && r + i == matrix.rows as isize - 1 {
                     return true;
                 }
 
-                let mncell = matrix.is_set(r + i + 1, j + c);
+                let mncell = matrix.is_set_i(r + i + 1, j + c);
 
                 if pcell && mncell {
                     return true;

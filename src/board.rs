@@ -1,4 +1,4 @@
-use pieces::TetrisPiece;
+use pieces::{TetrisPiece, PieceInfo};
 use utils::range_inclusive;
 
 pub type TetrisCell = Option<TetrisPiece>;
@@ -31,7 +31,19 @@ impl TetrisBoard {
     }
 
     pub fn is_set(&self, i: usize, j: usize) -> bool {
-        self.data[i][j].is_some()
+        if i >= self.rows || j >= self.cols {
+            false
+        } else {
+            self.data[i][j].is_some()
+        }
+    }
+
+    pub fn is_set_i(&self, i: isize, j: isize) -> bool {
+        if i >= self.rows as isize || j >= self.cols as isize || i < 0 || j < 0 {
+            false
+        } else {
+            self.data[i as usize][j as usize].is_some()
+        }
     }
 
     pub fn set(&mut self, i: usize, j: usize, p: TetrisPiece) {
@@ -50,6 +62,21 @@ impl TetrisBoard {
         self.data[i].iter().all(|cell| cell.is_some())
     }
 
+    pub fn finalize(&mut self, piece: &PieceInfo, r: usize, c: usize) {
+        let w = piece.board.cols;
+        let h = piece.board.rows;
+
+        for i in 0..h {
+            for j in 0..w {
+                let pcell = piece.board.is_set(i, j);
+
+                if pcell {
+                    self.set(i + r, j + c, piece.piece);
+                }
+            }
+        }
+    }
+
     pub fn remove_completed_rows(&mut self, last_to_copy: Option<usize>)
     {
         let mut ranges = vec![];
@@ -58,7 +85,6 @@ impl TetrisBoard {
         let mut to = None;
 
         for i in range_inclusive(self.data.len() as isize - 1, 0, -1) {
-
             let i = i as usize;
 
             if self.is_complete(i) {
@@ -103,6 +129,28 @@ impl TetrisBoard {
         for i in last_to_copy..(last_to_copy - offset) {
             self.data[i] = self.empty_row_proto.clone();
         }
+    }
+
+    pub fn get_first_set_col(&self) -> Option<usize> {
+        for j in 0..self.cols {
+            for i in 0..self.rows {
+                if self.is_set(i, j) {
+                    return Some(j);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_last_set_col(&self) -> Option<usize> {
+        for j in (0..self.cols).rev() {
+            for i in 0..self.rows {
+                if self.is_set(i, j) {
+                    return Some(j);
+                }
+            }
+        }
+        None
     }
 }
 
