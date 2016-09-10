@@ -70,8 +70,7 @@ impl TetrisBoard {
         }
     }
 
-    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>)
-    {
+    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>) {
         let mut ranges = vec![];
 
         let mut from = None;

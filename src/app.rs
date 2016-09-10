@@ -17,7 +17,7 @@ pub struct App {
     rng: ThreadRng,
     time: f64,
     last_movement: f64,
-    buffer_next_pieces: VecDeque<TetrisPiece>
+    buffer_next_pieces: VecDeque<TetrisPiece>,
 }
 
 
@@ -32,7 +32,7 @@ impl App {
             rng: thread_rng(),
             time: 0f64,
             last_movement: 0f64,
-            buffer_next_pieces: VecDeque::with_capacity(5)
+            buffer_next_pieces: VecDeque::with_capacity(5),
         }
     }
 
@@ -90,7 +90,9 @@ impl App {
 
         if self.time - self.last_movement >= MOVE_DOWN_THRESHOLD {
             if self.piece.as_ref().unwrap().collides_on_next(self.r, self.c, &self.board) {
-                self.board.finalize(self.piece.as_ref().unwrap(), self.r as isize, self.c as isize);
+                self.board.finalize(self.piece.as_ref().unwrap(),
+                                    self.r as isize,
+                                    self.c as isize);
 
                 self.next_block();
             } else {
@@ -102,8 +104,7 @@ impl App {
 
     fn left_key_pressed(&mut self) {
         let piece = self.piece.as_ref().unwrap();
-        let piece_board = &piece.board;
-        let first_col = piece_board.get_first_set_col().unwrap() as isize;
+        let first_col = piece.board.get_first_set_col().unwrap() as isize;
 
         if self.c + first_col > 0 && !piece.collides_left(self.r, self.c, &self.board) {
             self.c -= 1;
@@ -112,10 +113,10 @@ impl App {
 
     fn right_key_pressed(&mut self) {
         let piece = self.piece.as_ref().unwrap();
-        let piece_board = &piece.board;
-        let last_col = piece_board.get_last_set_col().unwrap() as isize;
+        let last_col = piece.board.get_last_set_col().unwrap() as isize;
 
-        if self.c + last_col < (self.board.cols as isize) - 1 && !piece.collides_right(self.r, self.c, &self.board) {
+        if self.c + last_col < (self.board.cols as isize) - 1 &&
+           !piece.collides_right(self.r, self.c, &self.board) {
             self.c += 1;
         }
     }
@@ -168,7 +169,11 @@ impl App {
         self.new_block_in_buffer();
     }
 
-    fn draw_piece_block(i: isize, j: isize, piece: TetrisPiece, c: &graphics::Context, gl: &mut GlGraphics) {
+    fn draw_piece_block(i: isize,
+                        j: isize,
+                        piece: TetrisPiece,
+                        c: &graphics::Context,
+                        gl: &mut GlGraphics) {
         use graphics::*;
 
         let i = i as f64;

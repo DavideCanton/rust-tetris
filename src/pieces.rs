@@ -28,7 +28,7 @@ enum_from_primitive! {
 pub struct PieceInfo {
     pub piece: TetrisPiece,
     pub board: TetrisBoard,
-    pub rotation: PieceRotation
+    pub rotation: PieceRotation,
 }
 
 impl PieceInfo {
@@ -36,7 +36,7 @@ impl PieceInfo {
         let mut pi = PieceInfo {
             piece: piece,
             rotation: PieceRotation::UP,
-            board: TetrisBoard::new(0, 0)
+            board: TetrisBoard::new(0, 0),
         };
 
         pi.setup_board();
@@ -168,11 +168,13 @@ impl PieceInfo {
         match piece {
             TetrisPiece::I => (1, 4),
             TetrisPiece::O => (2, 2),
-            _ => (2, 3)
+            _ => (2, 3),
         }
     }
 
-    pub fn fill_piece_matrix(piece: TetrisPiece, matrix: &mut TetrisBoard, rotation: PieceRotation) {
+    pub fn fill_piece_matrix(piece: TetrisPiece,
+                             matrix: &mut TetrisBoard,
+                             rotation: PieceRotation) {
         let matrix_str = match piece {
             // O can't rotate
             TetrisPiece::O => PieceInfo::get_rotations_O(),
@@ -189,7 +191,7 @@ impl PieceInfo {
 
             TetrisPiece::L => PieceInfo::get_rotations_L(rotation),
 
-            TetrisPiece::T => PieceInfo::get_rotations_T(rotation)
+            TetrisPiece::T => PieceInfo::get_rotations_T(rotation),
         };
 
         for (row, row_vec) in matrix_str.split('|').zip(matrix.rows_mut()) {
@@ -197,7 +199,7 @@ impl PieceInfo {
                 let b = match c {
                     '0' => None,
                     '1' => Some(piece),
-                    _ => panic!()
+                    _ => panic!(),
                 };
 
                 *col = b;
@@ -216,16 +218,14 @@ impl PieceInfo {
         }
     }
 
-    fn get_rotations_Z(rotation: PieceRotation) -> &'static str
-    {
+    fn get_rotations_Z(rotation: PieceRotation) -> &'static str {
         match rotation {
             PieceRotation::UP | PieceRotation::DOWN => "010|110|100",
             PieceRotation::LEFT | PieceRotation::RIGHT => "000|110|011",
         }
     }
 
-    fn get_rotations_S(rotation: PieceRotation) -> &'static str
-    {
+    fn get_rotations_S(rotation: PieceRotation) -> &'static str {
         match rotation {
             PieceRotation::UP | PieceRotation::DOWN => "010|011|001",
             PieceRotation::LEFT | PieceRotation::RIGHT => "000|011|110",
@@ -237,7 +237,7 @@ impl PieceInfo {
             PieceRotation::UP => "010|010|110",
             PieceRotation::LEFT => "000|111|001",
             PieceRotation::DOWN => "011|010|010",
-            PieceRotation::RIGHT => "000|100|111"
+            PieceRotation::RIGHT => "000|100|111",
         }
     }
 
@@ -246,7 +246,7 @@ impl PieceInfo {
             PieceRotation::UP => "010|010|011",
             PieceRotation::LEFT => "000|001|111",
             PieceRotation::DOWN => "110|010|010",
-            PieceRotation::RIGHT => "000|111|100"
+            PieceRotation::RIGHT => "000|111|100",
         }
     }
 
@@ -255,7 +255,7 @@ impl PieceInfo {
             PieceRotation::UP => "010|111|000",
             PieceRotation::LEFT => "010|110|010",
             PieceRotation::DOWN => "000|111|010",
-            PieceRotation::RIGHT => "010|011|010"
+            PieceRotation::RIGHT => "010|011|010",
         }
     }
 }
@@ -324,10 +324,10 @@ mod tests {
 
             info.rotate_piece();
 
-            assert!(info.board.get(0,0).is_some());
-            assert!(info.board.get(1,0).is_some());
-            assert!(info.board.get(0,1).is_some());
-            assert!(info.board.get(1,1).is_some());
+            assert!(info.board.get(0, 0).is_some());
+            assert!(info.board.get(1, 0).is_some());
+            assert!(info.board.get(0, 1).is_some());
+            assert!(info.board.get(1, 1).is_some());
         }
     }
 }

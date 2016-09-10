@@ -8,7 +8,8 @@ extern crate glutin_window;
 extern crate opengl_graphics;
 extern crate rand;
 
-#[macro_use] extern crate enum_primitive;
+#[macro_use]
+extern crate enum_primitive;
 extern crate num;
 
 mod app;
@@ -28,10 +29,10 @@ fn main() {
     let opengl = OpenGL::V3_2;
 
     let mut window: Window = WindowSettings::new("Tetris", [800, 600])
-        .opengl(opengl)
-        .exit_on_esc(true)
-        .build()
-        .unwrap();
+                                 .opengl(opengl)
+                                 .exit_on_esc(true)
+                                 .build()
+                                 .unwrap();
 
     let mut app = App::new(opengl);
     app.start();

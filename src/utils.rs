@@ -39,7 +39,9 @@ pub fn piece_to_color(p: TetrisPiece) -> F32_4 {
     }
 }
 
-pub struct MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
+pub struct MyInclusiveRange<T>
+    where T: Eq + Add<Output = T> + Copy + Ord
+{
     start: T,
     end: T,
     step: T,
@@ -47,7 +49,9 @@ pub struct MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
     done: bool,
 }
 
-pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
+pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T>
+    where T: Eq + Add<Output = T> + Copy + Ord
+{
     MyInclusiveRange {
         done: false,
         start: start,
@@ -57,7 +61,9 @@ pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T> wher
     }
 }
 
-impl<T> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
+impl<T> MyInclusiveRange<T>
+    where T: Eq + Add<Output = T> + Copy + Ord
+{
     fn is_ascending(&self) -> bool {
         self.start + self.step > self.start
     }
@@ -79,7 +85,9 @@ impl<T> MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
     }
 }
 
-impl<T> Iterator for MyInclusiveRange<T> where T: Eq + Add<Output = T> + Copy + Ord {
+impl<T> Iterator for MyInclusiveRange<T>
+    where T: Eq + Add<Output = T> + Copy + Ord
+{
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
@@ -123,7 +131,7 @@ mod tests {
     #[test]
     fn test_desc_range() {
         let v: Vec<_> = range_inclusive(5, 0, -1).collect();
-        assert_eq!(&v[..], [5,4,3,2,1,0]);
+        assert_eq!(&v[..], [5, 4, 3, 2, 1, 0]);
     }
 
     #[test]
