@@ -3,11 +3,17 @@ use std::ops::Add;
 
 pub type F32_4 = [f32; 4];
 
+pub const R: isize = 20;
+pub const C: isize = 10;
+
+pub const MOVE_DOWN_THRESHOLD: f64 = 0.1;
+pub const WIDTH: f64 = 30.0;
+
 pub const BLACK: F32_4 = [0.0, 0.0, 0.0, 1.0];
 pub const YELLOW: F32_4 = [1.0, 1.0, 0.0, 1.0];
 pub const RED: F32_4 = [1.0, 0.0, 0.0, 1.0];
 pub const BLUE: F32_4 = [0.0, 0.0, 1.0, 1.0];
-pub const LIGHTBLUE: F32_4 = [0.0, 0.0, 0.6, 1.0]; // TODO
+pub const LIGHTBLUE: F32_4 = [0.0, 0.75, 1.0, 1.0];
 pub const GREEN: F32_4 = [0.0, 1.0, 0.0, 1.0];
 pub const ORANGE: F32_4 = [1.0, 0.6, 0.0, 1.0];
 pub const PURPLE: F32_4 = [1.0, 0.0, 1.0, 1.0];

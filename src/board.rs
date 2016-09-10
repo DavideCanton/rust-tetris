@@ -4,19 +4,19 @@ use utils::range_inclusive;
 pub type TetrisCell = Option<TetrisPiece>;
 
 pub struct TetrisBoard {
-    pub rows: usize,
-    pub cols: usize,
+    pub rows: isize,
+    pub cols: isize,
     data: Vec<Vec<TetrisCell>>,
     empty_row_proto: Vec<TetrisCell>,
 }
 
 impl TetrisBoard {
-    pub fn new(rows: usize, cols: usize) -> Self {
+    pub fn new(rows: isize, cols: isize) -> Self {
         let mut board = TetrisBoard {
             rows: rows,
             cols: cols,
-            data: Vec::with_capacity(rows),
-            empty_row_proto: vec![None; cols],
+            data: Vec::with_capacity(rows as usize),
+            empty_row_proto: vec![None; cols as usize],
         };
 
         for _ in 0..rows {
@@ -26,43 +26,36 @@ impl TetrisBoard {
         board
     }
 
-    pub fn get(&self, i: usize, j: usize) -> TetrisCell {
-        self.data[i][j]
+    pub fn get(&self, i: isize, j: isize) -> TetrisCell {
+        self.data[i as usize][j as usize]
     }
 
-    pub fn is_set(&self, i: usize, j: usize) -> bool {
-        if i >= self.rows || j >= self.cols {
-            false
-        } else {
-            self.data[i][j].is_some()
-        }
-    }
-
-    pub fn is_set_i(&self, i: isize, j: isize) -> bool {
-        if i >= self.rows as isize || j >= self.cols as isize || i < 0 || j < 0 {
+    pub fn is_set(&self, i: isize, j: isize) -> bool {
+        if i >= self.rows || j >= self.cols || i < 0 || j < 0 {
             false
         } else {
             self.data[i as usize][j as usize].is_some()
         }
     }
 
-    pub fn set(&mut self, i: usize, j: usize, p: TetrisPiece) {
+
+    pub fn set(&mut self, i: isize, j: isize, p: TetrisPiece) {
         self.set_val(i, j, Some(p));
     }
 
-    pub fn clear(&mut self, i: usize, j: usize) {
+    pub fn clear(&mut self, i: isize, j: isize) {
         self.set_val(i, j, None);
     }
 
-    pub fn set_val(&mut self, i: usize, j: usize, b: TetrisCell) {
-        self.data[i][j] = b;
+    pub fn set_val(&mut self, i: isize, j: isize, b: TetrisCell) {
+        self.data[i as usize][j as usize] = b;
     }
 
-    pub fn is_complete(&self, i: usize) -> bool {
-        self.data[i].iter().all(|cell| cell.is_some())
+    pub fn is_complete(&self, i: isize) -> bool {
+        self.data[i as usize].iter().all(|cell| cell.is_some())
     }
 
-    pub fn finalize(&mut self, piece: &PieceInfo, r: usize, c: usize) {
+    pub fn finalize(&mut self, piece: &PieceInfo, r: isize, c: isize) {
         let w = piece.board.cols;
         let h = piece.board.rows;
 
@@ -77,7 +70,7 @@ impl TetrisBoard {
         }
     }
 
-    pub fn remove_completed_rows(&mut self, last_to_copy: Option<usize>)
+    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>)
     {
         let mut ranges = vec![];
 
@@ -85,7 +78,7 @@ impl TetrisBoard {
         let mut to = None;
 
         for i in range_inclusive(self.data.len() as isize - 1, 0, -1) {
-            let i = i as usize;
+            let i = i as isize;
 
             if self.is_complete(i) {
                 if from.is_none() {
@@ -113,7 +106,7 @@ impl TetrisBoard {
         Box::new(self.data.iter_mut())
     }
 
-    pub fn remove_rows(&mut self, from: usize, to: usize, last_to_copy: Option<usize>) {
+    pub fn remove_rows(&mut self, from: isize, to: isize, last_to_copy: Option<isize>) {
         let offset = to - from;
 
         if offset == 0 {
@@ -123,15 +116,15 @@ impl TetrisBoard {
         let last_to_copy = last_to_copy.unwrap_or(offset);
 
         for i in (to - 1)..last_to_copy {
-            self.data.swap(i, i - offset);
+            self.data.swap(i as usize, i as usize - offset as usize);
         }
 
         for i in last_to_copy..(last_to_copy - offset) {
-            self.data[i] = self.empty_row_proto.clone();
+            self.data[i as usize] = self.empty_row_proto.clone();
         }
     }
 
-    pub fn get_first_set_col(&self) -> Option<usize> {
+    pub fn get_first_set_col(&self) -> Option<isize> {
         for j in 0..self.cols {
             for i in 0..self.rows {
                 if self.is_set(i, j) {
@@ -142,7 +135,7 @@ impl TetrisBoard {
         None
     }
 
-    pub fn get_last_set_col(&self) -> Option<usize> {
+    pub fn get_last_set_col(&self) -> Option<isize> {
         for j in (0..self.cols).rev() {
             for i in 0..self.rows {
                 if self.is_set(i, j) {

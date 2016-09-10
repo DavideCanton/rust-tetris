@@ -53,18 +53,79 @@ impl PieceInfo {
         self.setup_board();
     }
 
+    pub fn collides_left(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
+        let w = self.board.cols;
+        let h = self.board.rows;
+
+        for i in 0..h {
+            for j in 0..w {
+                let i = i as isize;
+                let j = j as isize;
+
+                let pcell = self.board.is_set(i, j);
+                let mcell = matrix.is_set(r + i, j + c);
+
+                if pcell && mcell {
+                    panic!("Piece overlapping matrix!");
+                }
+
+                if j + c == 0 {
+                    return false;
+                }
+
+                let mncell = matrix.is_set(r + i, j + c - 1);
+
+                if pcell && mncell {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn collides_right(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
+        let w = self.board.cols;
+        let h = self.board.rows;
+
+        for i in 0..h {
+            for j in 0..w {
+                let i = i as isize;
+                let j = j as isize;
+
+                let pcell = self.board.is_set(i, j);
+                let mcell = matrix.is_set(r + i, j + c);
+
+                if pcell && mcell {
+                    panic!("Piece overlapping matrix!");
+                }
+
+                if j + c == self.board.cols - 1 {
+                    return false;
+                }
+
+                let mncell = matrix.is_set(r + i, j + c + 1);
+
+                if pcell && mncell {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     pub fn collides_on_next(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
         let w = self.board.cols;
         let h = self.board.rows;
 
         for i in 0..h {
             for j in 0..w {
-
                 let i = i as isize;
                 let j = j as isize;
 
-                let pcell = self.board.is_set_i(i, j);
-                let mcell = matrix.is_set_i(r + i, j + c);
+                let pcell = self.board.is_set(i, j);
+                let mcell = matrix.is_set(r + i, j + c);
 
                 if pcell && mcell {
                     panic!("Piece overlapping matrix!");
@@ -74,7 +135,7 @@ impl PieceInfo {
                     return true;
                 }
 
-                let mncell = matrix.is_set_i(r + i + 1, j + c);
+                let mncell = matrix.is_set(r + i + 1, j + c);
 
                 if pcell && mncell {
                     return true;
@@ -99,11 +160,11 @@ impl PieceInfo {
 
     fn next_rotation(rotation: PieceRotation) -> PieceRotation {
         let mut i = rotation as u8;
-        i = (i + 1) % 4;
+        i = (i + 3) % 4;
         PieceRotation::from_u8(i).unwrap()
     }
 
-    fn get_piece_size(piece: TetrisPiece) -> (usize, usize) {
+    fn get_piece_size(piece: TetrisPiece) -> (isize, isize) {
         match piece {
             TetrisPiece::I => (1, 4),
             TetrisPiece::O => (2, 2),
