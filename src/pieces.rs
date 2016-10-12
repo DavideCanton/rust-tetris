@@ -303,13 +303,13 @@ mod tests {
         assert_eq!(rotation, PieceRotation::UP);
         rotation = PieceInfo::next_rotation(rotation);
 
-        assert_eq!(rotation, PieceRotation::LEFT);
+        assert_eq!(rotation, PieceRotation::RIGHT);
         rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::DOWN);
         rotation = PieceInfo::next_rotation(rotation);
 
-        assert_eq!(rotation, PieceRotation::RIGHT);
+        assert_eq!(rotation, PieceRotation::LEFT);
         rotation = PieceInfo::next_rotation(rotation);
 
         assert_eq!(rotation, PieceRotation::UP);
