@@ -86,6 +86,10 @@ impl TetrisBoard {
                     to = Some(i);
                 }
             } else {
+                if from.is_none() || to.is_none() {
+                    return;
+                }
+
                 ranges.push((from.unwrap(), to.unwrap()));
                 from = None;
                 to = None;

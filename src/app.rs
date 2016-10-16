@@ -89,15 +89,23 @@ impl App {
         self.time += args.dt;
 
         if self.time - self.last_movement >= MOVE_DOWN_THRESHOLD {
-            if self.piece.as_ref().unwrap().collides_on_next(self.r, self.c, &self.board) {
-                self.board.finalize(self.piece.as_ref().unwrap(),
-                                    self.r as isize,
-                                    self.c as isize);
+            let mut next_block = false;
 
+            {
+                let piece: &PieceInfo = self.piece.as_ref().unwrap();
+
+                if piece.collides_on_next(self.r, self.c, &self.board) {
+                    self.board.finalize(piece, self.r as isize, self.c as isize);
+                    self.board.remove_completed_rows(Some(20));
+                    next_block = true;
+                } else {
+                    self.r += 1;
+                    self.last_movement = self.time;
+                }
+            }
+
+            if next_block {
                 self.next_block();
-            } else {
-                self.r += 1;
-                self.last_movement = self.time;
             }
         }
     }
