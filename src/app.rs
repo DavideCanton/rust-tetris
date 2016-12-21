@@ -139,7 +139,7 @@ impl App {
         let last_col = piece.board.get_last_set_col().unwrap() as isize;
 
         if c + first_col <= 0 {
-            self.c += -(c + first_col);
+            self.c -= c + first_col;
         } else if c + last_col >= (self.board.cols as isize) - 1 {
             self.c -= c + last_col - self.board.cols as isize + 1;
         }
