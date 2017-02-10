@@ -3,6 +3,7 @@
 #![allow(non_camel_case_types)]
 
 extern crate piston;
+extern crate piston_window;
 extern crate graphics;
 extern crate glutin_window;
 extern crate opengl_graphics;
@@ -18,17 +19,18 @@ mod pieces;
 mod utils;
 
 use piston::window::WindowSettings;
+use piston_window::PistonWindow;
 use piston::event_loop::*;
 use piston::input::*;
-use glutin_window::GlutinWindow as Window;
 use opengl_graphics::OpenGL;
+use glutin_window::GlutinWindow;
 use app::*;
 
 
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    let mut window: Window = WindowSettings::new("Tetris", [800, 600])
+    let mut window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [800, 600])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
@@ -37,7 +39,7 @@ fn main() {
     let mut app = App::new(opengl);
     app.start();
 
-    let mut game_loop = window.events();
+    let mut game_loop = window.events;
     game_loop.set_max_fps(60);    
 
     while let Some(e) = game_loop.next(&mut window) {
