@@ -17,6 +17,7 @@ pub const LIGHTBLUE: F32_4 = [0.0, 0.75, 1.0, 1.0];
 pub const GREEN: F32_4 = [0.0, 1.0, 0.0, 1.0];
 pub const ORANGE: F32_4 = [1.0, 0.6, 0.0, 1.0];
 pub const PURPLE: F32_4 = [1.0, 0.0, 1.0, 1.0];
+pub const OVERLAY: F32_4 = [0.0, 0.0, 0.0, 0.8];
 
 pub const BGCOLOR: F32_4 = BLACK;
 pub const O_COLOR: F32_4 = YELLOW;
@@ -27,8 +28,8 @@ pub const T_COLOR: F32_4 = PURPLE;
 pub const L_COLOR: F32_4 = BLUE;
 pub const J_COLOR: F32_4 = ORANGE;
 
-pub fn piece_to_color(p: TetrisPiece) -> F32_4 {
-    match p {
+pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> F32_4 {
+    let original_color = match p {
         TetrisPiece::O => O_COLOR,
         TetrisPiece::I => I_COLOR,
         TetrisPiece::S => S_COLOR,
@@ -36,7 +37,16 @@ pub fn piece_to_color(p: TetrisPiece) -> F32_4 {
         TetrisPiece::T => T_COLOR,
         TetrisPiece::L => L_COLOR,
         TetrisPiece::J => J_COLOR,
+    };
+
+    let mut color = [0.0, 0.0, 0.0, 0.0];
+    color.copy_from_slice(&original_color);
+
+    if is_shadow {
+        color[3] = 0.3;
     }
+
+    color
 }
 
 pub struct MyInclusiveRange<T>
@@ -102,11 +112,7 @@ impl<T> Iterator for MyInclusiveRange<T>
                 self.cur = self.cur + self.step;
             }
 
-            if self.is_valid(val) {
-                Some(val)
-            } else {
-                None
-            }
+            if self.is_valid(val) { Some(val) } else { None }
         }
     }
 }

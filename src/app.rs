@@ -11,8 +11,10 @@ use enum_primitive::FromPrimitive;
 pub struct App {
     gl: GlGraphics,
     board: TetrisBoard,
+    speed: f64,
     r: isize,
     c: isize,
+    pause: bool,
     piece: Option<PieceInfo>,
     rng: ThreadRng,
     time: f64,
@@ -28,12 +30,18 @@ impl App {
             board: TetrisBoard::new(R, C),
             r: 0,
             c: 0,
+            speed: 1.0,
+            pause: false,
             piece: None,
             rng: thread_rng(),
             time: 0f64,
             last_movement: 0f64,
             buffer_next_pieces: VecDeque::with_capacity(5),
         }
+    }
+
+    pub fn is_paused(&self) -> bool {
+        self.pause
     }
 
     pub fn render(&mut self, args: &RenderArgs) {
@@ -43,6 +51,7 @@ impl App {
         let pieceMOpt = &self.piece;
         let r = self.r as isize;
         let c = self.c as isize;
+        let pause = self.is_paused();
 
         self.gl.draw(args.viewport(), |ctx, gl| {
             clear(BGCOLOR, gl);
@@ -52,13 +61,20 @@ impl App {
                     let p = board.get(i, j);
 
                     if let Some(piece) = p {
-                        App::draw_piece_block(i as isize, j as isize, piece, &ctx, gl);
+                        App::draw_piece_block(i as isize, j as isize, piece, &ctx, gl, false);
                     }
                 }
             }
 
             if let Some(pieceInfo) = pieceMOpt.as_ref() {
                 let pieceM = &pieceInfo.board;
+
+                // compute position for shadow
+                let mut shadow_r = r;
+
+                while !pieceInfo.collides_on_next(shadow_r, c, board) {
+                    shadow_r += 1;
+                }
 
                 for i in 0..pieceM.rows {
                     for j in 0..pieceM.cols {
@@ -68,14 +84,22 @@ impl App {
                         let j = j as isize;
 
                         if let Some(piece) = p {
-                            let v = j + c;
+                            if j + c >= 0 && j + c < board.cols as isize {
+                                App::draw_piece_block(i + r, j + c, piece, &ctx, gl, false);
 
-                            if v >= 0 && v < board.cols as isize {
-                                App::draw_piece_block(i + r, v, piece, &ctx, gl);
+                                if !pause {
+                                    App::draw_piece_block(i + shadow_r, j + c, piece, &ctx, gl, true);
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            if pause {
+                // draw pause
+                let overlay = rectangle::rectangle_by_corners(0.0, 0.0, 800.0, 600.0);
+                rectangle(OVERLAY, overlay, ctx.transform, gl);
             }
         });
     }
@@ -86,7 +110,7 @@ impl App {
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
-        self.time += args.dt;
+        self.time += args.dt * self.speed;
 
         if self.time - self.last_movement >= MOVE_DOWN_THRESHOLD {
             let mut next_block = false;
@@ -108,6 +132,10 @@ impl App {
                 self.next_block();
             }
         }
+    }
+
+    fn enter_key_pressed(&mut self) {
+        self.pause = !self.pause;
     }
 
     fn left_key_pressed(&mut self) {
@@ -145,14 +173,42 @@ impl App {
         }
     }
 
-    fn down_key_pressed(&mut self) {}
+    fn up_key_pressed(&mut self) {
+        {
+            let piece: &PieceInfo = self.piece.as_ref().unwrap();            
+
+            while !piece.collides_on_next(self.r, self.c, &self.board) {
+                self.r += 1;
+            }
+
+            self.board.finalize(piece, self.r as isize, self.c as isize);
+            self.board.remove_completed_rows(Some(20));
+        }
+        self.next_block();
+    }
+
+    fn down_key_pressed(&mut self) {
+        self.speed = 2.0;
+    }
 
     pub fn process_keys(&mut self, args: &Button) {
+        if let Button::Keyboard(Key::Down) = *args {} else {
+            self.speed = 1.0;
+        }
+
+        if self.pause {
+            if let Button::Keyboard(Key::Return) = *args {} else {
+                return;
+            }
+        }
+
         match *args {
             Button::Keyboard(Key::Left) => self.left_key_pressed(),
             Button::Keyboard(Key::Right) => self.right_key_pressed(),
             Button::Keyboard(Key::Space) => self.space_key_pressed(),
+            Button::Keyboard(Key::Return) => self.enter_key_pressed(),
             Button::Keyboard(Key::Down) => self.down_key_pressed(),
+            Button::Keyboard(Key::Up) => self.up_key_pressed(),
             _ => {}
         }
     }
@@ -175,13 +231,15 @@ impl App {
         self.c = C / 2 - 1;
         self.piece = Some(PieceInfo::new(piece));
         self.new_block_in_buffer();
+        self.speed = 1.0;
     }
 
     fn draw_piece_block(i: isize,
                         j: isize,
                         piece: TetrisPiece,
                         c: &graphics::Context,
-                        gl: &mut GlGraphics) {
+                        gl: &mut GlGraphics,
+                        is_shadow: bool) {
         use graphics::*;
 
         let i = i as f64;
@@ -190,7 +248,7 @@ impl App {
         let square = rectangle::square(j * WIDTH, i * WIDTH, WIDTH);
         rectangle(BGCOLOR, square, c.transform, gl);
         let square = rectangle::square(j * WIDTH + 1.0, i * WIDTH + 1.0, WIDTH - 2.0);
-        let color = piece_to_color(piece);
+        let color = piece_to_color(piece, is_shadow);
         rectangle(color, square, c.transform, gl);
     }
 }
