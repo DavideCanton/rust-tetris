@@ -1,5 +1,6 @@
 use pieces::{TetrisPiece, PieceInfo};
 use utils::range_inclusive;
+use std::fmt::{Formatter, Debug, Result};
 
 pub type TetrisCell = Option<TetrisPiece>;
 
@@ -52,7 +53,11 @@ impl TetrisBoard {
     }
 
     pub fn is_complete(&self, i: isize) -> bool {
-        self.data[i as usize].iter().all(|cell| cell.is_some())
+        let c = self.data[i as usize].iter().all(|cell| cell.is_some());
+
+        println!("Is row {} complete? {}", i, c);
+
+        c
     }
 
     pub fn finalize(&mut self, piece: &PieceInfo, r: isize, c: isize) {
@@ -74,7 +79,7 @@ impl TetrisBoard {
         let mut ranges = vec![];
 
         let mut from = None;
-        let mut to = None;
+        let mut to: Option<isize> = None;
 
         for i in range_inclusive(self.data.len() as isize - 1, 0, -1) {
             let i = i as isize;
@@ -85,16 +90,18 @@ impl TetrisBoard {
                 } else if to.is_none() {
                     to = Some(i);
                 }
-            } else {
-                if from.is_none() || to.is_none() {
-                    return;
-                }
 
-                ranges.push((from.unwrap(), to.unwrap()));
+            } else if from.is_some() {
+                let fromI = from.unwrap();
+                let toI = to.unwrap_or(fromI);
+
+                ranges.push((fromI, toI - 1));
                 from = None;
                 to = None;
             }
         }
+
+        println!("Got to remove {:?}", ranges);
 
         for range in ranges {
             self.remove_rows(range.0, range.1, last_to_copy);
@@ -110,19 +117,21 @@ impl TetrisBoard {
     }
 
     pub fn remove_rows(&mut self, from: isize, to: isize, last_to_copy: Option<isize>) {
-        let offset = to - from;
+        let offset = from - to;
 
         if offset == 0 {
             return;
         }
 
         let last_to_copy = last_to_copy.unwrap_or(offset);
+        let last_to_copy_rev = self.rows - last_to_copy;
 
-        for i in (to - 1)..last_to_copy {
-            self.data.swap(i as usize, i as usize - offset as usize);
+        for i in range_inclusive(to, last_to_copy_rev, -1) {
+            println!("Swapping {} with {}", i, i + offset);
+            self.data.swap(i as usize, i as usize + offset as usize);
         }
 
-        for i in last_to_copy..(last_to_copy - offset) {
+        for i in last_to_copy_rev..(last_to_copy_rev + offset) {
             self.data[i as usize] = self.empty_row_proto.clone();
         }
     }
@@ -150,16 +159,66 @@ impl TetrisBoard {
     }
 }
 
+impl Debug for TetrisBoard {
+    fn fmt(&self, formatter: &mut Formatter) -> Result {
+
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                let cell = self.get(i, j);
+
+                let c = cell.map_or(' ', |_| '*');
+
+                try!(write!(formatter, "{}", c))
+            }
+
+            try!(write!(formatter, "{}", "\n"))
+        }
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod tests {
     use super::TetrisBoard;
     use pieces::TetrisPiece;
 
+    fn load_board(board: &mut TetrisBoard, s: &str) {
+        let c = board.cols;
+
+        let mut i = 0;
+        for ch in s.chars() {
+            match ch {
+                ' ' => board.clear(i / c, i % c),
+                '*' => board.set(i / c, i % c, TetrisPiece::O),
+                _ => panic!(),
+            }
+            i += 1;
+        }
+    }
+
     #[test]
     fn test_remove_rows() {
+
         let mut board = TetrisBoard::new(5, 3);
 
-        board.set(4, 0, TetrisPiece::O);
+        load_board(&mut board, "     *  *******");
+
+        println!("{:?}", board);
+        println!("-----------");
+
+        board.remove_completed_rows(Some(5));
+
+        for i in 0..5 {
+            for j in 0..3 {
+                println!("Testing {},{}", i, j);
+                if (i == 3 || i == 4) && j == 2 {
+                    assert!(board.get(i, j).is_some());
+                } else {
+                    assert!(board.get(i, j).is_none());
+                }
+            }
+        }
     }
 }
