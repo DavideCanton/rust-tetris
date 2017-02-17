@@ -55,7 +55,7 @@ impl TetrisBoard {
     pub fn is_complete(&self, i: isize) -> bool {
         let c = self.data[i as usize].iter().all(|cell| cell.is_some());
 
-        println!("Is row {} complete? {}", i, c);
+        //println!("Is row {} complete? {}", i, c);
 
         c
     }
@@ -75,7 +75,7 @@ impl TetrisBoard {
         }
     }
 
-    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>) {
+    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>) -> i32 {
         let mut ranges = vec![];
 
         let mut from = None;
@@ -87,7 +87,7 @@ impl TetrisBoard {
             if self.is_complete(i) {
                 if from.is_none() {
                     from = Some(i);
-                } else if to.is_none() {
+                } else {
                     to = Some(i);
                 }
 
@@ -101,11 +101,13 @@ impl TetrisBoard {
             }
         }
 
-        println!("Got to remove {:?}", ranges);
+        //println!("Got to remove {:?}", ranges);
 
-        for range in ranges {
+        for range in &ranges {
             self.remove_rows(range.0, range.1, last_to_copy);
         }
+
+        ranges.iter().map(|r| (r.0 - r.1) as i32).sum()
     }
 
     pub fn rows<'a>(&'a self) -> Box<Iterator<Item = &'a Vec<TetrisCell>> + 'a> {
@@ -126,13 +128,14 @@ impl TetrisBoard {
         let last_to_copy = last_to_copy.unwrap_or(offset);
         let last_to_copy_rev = self.rows - last_to_copy;
 
-        for i in range_inclusive(to, last_to_copy_rev, -1) {
-            println!("Swapping {} with {}", i, i + offset);
-            self.data.swap(i as usize, i as usize + offset as usize);
-        }
-
-        for i in last_to_copy_rev..(last_to_copy_rev + offset) {
+        for i in range_inclusive(from, to + 1, -1) {
+            //println!("Clearing {}", i);
             self.data[i as usize] = self.empty_row_proto.clone();
+        }
+        for i in range_inclusive(to, last_to_copy_rev, -1) {
+            let row_to_clear = i as usize + offset as usize;
+            //println!("Swapping {} with {}", i, row_to_clear);
+            self.data.swap(i as usize, row_to_clear);
         }
     }
 
@@ -210,14 +213,38 @@ mod tests {
 
         board.remove_completed_rows(Some(5));
 
+        println!("{:?}", board);
+        println!("-----------");
+
         for i in 0..5 {
             for j in 0..3 {
-                println!("Testing {},{}", i, j);
                 if (i == 3 || i == 4) && j == 2 {
                     assert!(board.get(i, j).is_some());
                 } else {
                     assert!(board.get(i, j).is_none());
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn test_remove_rows3() {
+
+        let mut board = TetrisBoard::new(5, 3);
+
+        load_board(&mut board, "      *********");
+
+        println!("{:?}", board);
+        println!("-----------");
+
+        board.remove_completed_rows(Some(5));
+
+        println!("{:?}", board);
+        println!("-----------");
+
+        for i in 0..5 {
+            for j in 0..3 {
+                assert!(board.get(i, j).is_none());
             }
         }
     }

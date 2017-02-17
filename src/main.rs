@@ -19,30 +19,48 @@ mod pieces;
 mod utils;
 
 use piston::window::WindowSettings;
-use piston_window::PistonWindow;
+use piston_window::{Window, PistonWindow};
 use piston::event_loop::*;
 use piston::input::*;
 use opengl_graphics::OpenGL;
 use glutin_window::GlutinWindow;
 use app::*;
+use std::rc::Rc;
+use std::cell::RefCell;
 
+
+fn configure<W: Window>(win : &mut Rc<RefCell<PistonWindow<W>>>) {
+    let mut win = win.borrow_mut();
+    win.events.set_max_fps(60);
+}
 
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    let mut window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [800, 600])
+    let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [800, 600])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
-    let mut app = App::new(opengl);
+    let mut rcw = Rc::new(RefCell::new(window));
+
+    let mut app = App::new(opengl, rcw.clone());
     app.start();
 
-    let mut game_loop = window.events;
-    game_loop.set_max_fps(60);    
+    {
+        configure(&mut rcw);
+    }
 
-    while let Some(e) = game_loop.next(&mut window) {
+    loop {
+        let e;
+        {
+            match rcw.borrow_mut().next() {
+                None => return,
+                Some(s) => e = s
+            };
+        }
+
         if let Some(r) = e.render_args() {
             app.render(&r);
         }

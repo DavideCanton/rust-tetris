@@ -7,35 +7,46 @@ use graphics;
 use rand::{Rng, ThreadRng, thread_rng};
 use std::collections::VecDeque;
 use enum_primitive::FromPrimitive;
+use piston_window::{Window, PistonWindow};
+use std::rc::Rc;
+use std::cell::RefCell;
 
-pub struct App {
+pub struct App<W: Window> {
     gl: GlGraphics,
+    window: Rc<RefCell<PistonWindow<W>>>,
     board: TetrisBoard,
     speed: f64,
     r: isize,
     c: isize,
     pause: bool,
+    just_placed: bool,
     piece: Option<PieceInfo>,
     rng: ThreadRng,
     time: f64,
     last_movement: f64,
+    removed_rows: i32,
+    current_threshold: f64,
     buffer_next_pieces: VecDeque<TetrisPiece>,
 }
 
 
-impl App {
-    pub fn new(opengl: OpenGL) -> Self {
+impl<W: Window> App<W> {
+    pub fn new(opengl: OpenGL, window: Rc<RefCell<PistonWindow<W>>>) -> Self {
         App {
             gl: GlGraphics::new(opengl),
             board: TetrisBoard::new(R, C),
+            window: window,
             r: 0,
             c: 0,
             speed: 1.0,
+            just_placed: false,
             pause: false,
             piece: None,
             rng: thread_rng(),
             time: 0f64,
+            removed_rows: 0,
             last_movement: 0f64,
+            current_threshold: INITIAL_MOVE_DOWN_THRESHOLD,
             buffer_next_pieces: VecDeque::with_capacity(5),
         }
     }
@@ -61,7 +72,7 @@ impl App {
                     let p = board.get(i, j);
 
                     if let Some(piece) = p {
-                        App::draw_piece_block(i as isize, j as isize, piece, &ctx, gl, false);
+                        App::<W>::draw_piece_block(i as isize, j as isize, piece, &ctx, gl, false);
                     }
                 }
             }
@@ -85,10 +96,15 @@ impl App {
 
                         if let Some(piece) = p {
                             if j + c >= 0 && j + c < board.cols as isize {
-                                App::draw_piece_block(i + r, j + c, piece, &ctx, gl, false);
+                                App::<W>::draw_piece_block(i + r, j + c, piece, &ctx, gl, false);
 
                                 if !pause {
-                                    App::draw_piece_block(i + shadow_r, j + c, piece, &ctx, gl, true);
+                                    App::<W>::draw_piece_block(i + shadow_r,
+                                                               j + c,
+                                                               piece,
+                                                               &ctx,
+                                                               gl,
+                                                               true);
                                 }
                             }
                         }
@@ -109,18 +125,46 @@ impl App {
         self.next_block();
     }
 
+    fn handle_finalize(&mut self) {
+        let piece = self.piece.as_ref().unwrap();
+        self.board.finalize(piece, self.r as isize, self.c as isize);
+        let old_removed_rows = self.removed_rows;
+        self.removed_rows += self.board.remove_completed_rows(Some(20));
+        /*println!("{} {} {} {}",
+                 old_removed_rows,
+                 self.removed_rows,
+                 old_removed_rows / 10,
+                 self.removed_rows / 10);*/
+        if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
+            println!("Increasing difficulty");
+            self.current_threshold -= 0.1;
+        }
+    }
+
     pub fn update(&mut self, args: &UpdateArgs) {
         self.time += args.dt * self.speed;
 
-        if self.time - self.last_movement >= MOVE_DOWN_THRESHOLD {
+        if self.just_placed {
+            {
+                let piece: &PieceInfo = self.piece.as_ref().unwrap();
+
+                if piece.collides_on_next(self.r, self.c, &self.board) {
+                    println!("Game over!");
+                    self.window.borrow_mut().set_should_close(true);
+                }
+            }
+        }
+
+
+        if self.time - self.last_movement >= self.current_threshold {
+
             let mut next_block = false;
+            self.just_placed = false;
 
             {
                 let piece: &PieceInfo = self.piece.as_ref().unwrap();
 
                 if piece.collides_on_next(self.r, self.c, &self.board) {
-                    self.board.finalize(piece, self.r as isize, self.c as isize);
-                    self.board.remove_completed_rows(Some(20));
                     next_block = true;
                 } else {
                     self.r += 1;
@@ -129,6 +173,7 @@ impl App {
             }
 
             if next_block {
+                self.handle_finalize();
                 self.next_block();
             }
         }
@@ -175,15 +220,14 @@ impl App {
 
     fn up_key_pressed(&mut self) {
         {
-            let piece: &PieceInfo = self.piece.as_ref().unwrap();            
+            let piece: &PieceInfo = self.piece.as_ref().unwrap();
 
             while !piece.collides_on_next(self.r, self.c, &self.board) {
                 self.r += 1;
             }
-
-            self.board.finalize(piece, self.r as isize, self.c as isize);
-            self.board.remove_completed_rows(Some(20));
         }
+
+        self.handle_finalize();
         self.next_block();
     }
 
@@ -232,6 +276,7 @@ impl App {
         self.piece = Some(PieceInfo::new(piece));
         self.new_block_in_buffer();
         self.speed = 1.0;
+        self.just_placed = true;
     }
 
     fn draw_piece_block(i: isize,

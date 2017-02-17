@@ -6,7 +6,7 @@ pub type F32_4 = [f32; 4];
 pub const R: isize = 20;
 pub const C: isize = 10;
 
-pub const MOVE_DOWN_THRESHOLD: f64 = 0.1;
+pub const INITIAL_MOVE_DOWN_THRESHOLD: f64 = 0.5;
 pub const WIDTH: f64 = 30.0;
 
 pub const BLACK: F32_4 = [0.0, 0.0, 0.0, 1.0];
@@ -59,18 +59,6 @@ pub struct MyInclusiveRange<T>
     done: bool,
 }
 
-pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T>
-    where T: Eq + Add<Output = T> + Copy + Ord
-{
-    MyInclusiveRange {
-        done: false,
-        start: start,
-        end: end,
-        step: step,
-        cur: start,
-    }
-}
-
 impl<T> MyInclusiveRange<T>
     where T: Eq + Add<Output = T> + Copy + Ord
 {
@@ -117,6 +105,17 @@ impl<T> Iterator for MyInclusiveRange<T>
     }
 }
 
+pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T>
+    where T: Eq + Add<Output = T> + Copy + Ord
+{
+    MyInclusiveRange {
+        done: false,
+        start: start,
+        end: end,
+        step: step,
+        cur: start,
+    }
+}
 
 #[cfg(test)]
 mod tests {
