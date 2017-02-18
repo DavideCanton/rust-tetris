@@ -8,6 +8,9 @@ pub const C: isize = 10;
 
 pub const INITIAL_MOVE_DOWN_THRESHOLD: f64 = 0.5;
 pub const WIDTH: f64 = 30.0;
+pub const WIN_W: u32 = 800;
+pub const WIN_H: u32 = 600;
+pub const BASE_X: u32 = (WIN_W - (WIDTH as u32 * 10)) / 2;
 
 pub const BLACK: F32_4 = [0.0, 0.0, 0.0, 1.0];
 pub const YELLOW: F32_4 = [1.0, 1.0, 0.0, 1.0];

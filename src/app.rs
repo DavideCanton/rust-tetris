@@ -26,7 +26,7 @@ pub struct App<W: Window> {
     last_movement: f64,
     removed_rows: i32,
     current_threshold: f64,
-    buffer_next_pieces: VecDeque<TetrisPiece>,
+    buffer_next_pieces: VecDeque<PieceInfo>,
 }
 
 
@@ -63,9 +63,30 @@ impl<W: Window> App<W> {
         let r = self.r as isize;
         let c = self.c as isize;
         let pause = self.is_paused();
+        let next_block = self.buffer_next_pieces.back();
 
         self.gl.draw(args.viewport(), |ctx, gl| {
             clear(BGCOLOR, gl);
+
+            App::<W>::draw_border(&ctx, gl);
+
+            if let Some(next_piece) = next_block {
+                let pieceBoard = &next_piece.board;
+                for i in 0..pieceBoard.rows {
+                    for j in 0..pieceBoard.cols {
+                        let p = pieceBoard.get(i, j);
+
+                        let i = i as isize;
+                        let j = j as isize;
+
+                        App::<W>::draw_next_block(i as isize,
+                                                  j as isize,
+                                                  &next_piece.piece,
+                                                  &ctx,
+                                                  gl);
+                    }
+                }
+            }
 
             for i in 0..board.rows {
                 for j in 0..board.cols {
@@ -130,11 +151,11 @@ impl<W: Window> App<W> {
         self.board.finalize(piece, self.r as isize, self.c as isize);
         let old_removed_rows = self.removed_rows;
         self.removed_rows += self.board.remove_completed_rows(Some(20));
-        /*println!("{} {} {} {}",
-                 old_removed_rows,
-                 self.removed_rows,
-                 old_removed_rows / 10,
-                 self.removed_rows / 10);*/
+        // println!("{} {} {} {}",
+        // old_removed_rows,
+        // self.removed_rows,
+        // old_removed_rows / 10,
+        // self.removed_rows / 10);
         if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
             println!("Increasing difficulty");
             self.current_threshold -= 0.1;
@@ -260,7 +281,7 @@ impl<W: Window> App<W> {
     fn new_block_in_buffer(&mut self) {
         let n = self.rng.gen_range(0, 7);
         let piece = TetrisPiece::from_u8(n).unwrap();
-        self.buffer_next_pieces.push_front(piece);
+        self.buffer_next_pieces.push_front(PieceInfo::new(piece));
     }
 
     fn fill_buffer(&mut self) {
@@ -273,7 +294,7 @@ impl<W: Window> App<W> {
         let piece = self.buffer_next_pieces.pop_back().unwrap();
         self.r = 0;
         self.c = C / 2 - 1;
-        self.piece = Some(PieceInfo::new(piece));
+        self.piece = Some(piece);
         self.new_block_in_buffer();
         self.speed = 1.0;
         self.just_placed = true;
@@ -290,10 +311,42 @@ impl<W: Window> App<W> {
         let i = i as f64;
         let j = j as f64;
 
-        let square = rectangle::square(j * WIDTH, i * WIDTH, WIDTH);
+        let square = rectangle::square(BASE_X as f64 + j * WIDTH, i * WIDTH, WIDTH);
         rectangle(BGCOLOR, square, c.transform, gl);
-        let square = rectangle::square(j * WIDTH + 1.0, i * WIDTH + 1.0, WIDTH - 2.0);
+        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 1.0,
+                                       i * WIDTH + 1.0,
+                                       WIDTH - 2.0);
         let color = piece_to_color(piece, is_shadow);
         rectangle(color, square, c.transform, gl);
+    }
+
+    fn draw_next_block(i: isize,
+                       j: isize,
+                       piece: &TetrisPiece,
+                       c: &graphics::Context,
+                       gl: &mut GlGraphics) {
+        use graphics::*;
+
+        let i = i as f64;
+        let j = j as f64;
+
+        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 355.0, i * WIDTH, WIDTH);
+        rectangle(BGCOLOR, square, c.transform, gl);
+        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 356.0,
+                                       i * WIDTH + 1.0,
+                                       WIDTH - 2.0);
+        let color = piece_to_color(*piece, false);
+        rectangle(color, square, c.transform, gl);
+    }
+
+    fn draw_border(c: &graphics::Context, gl: &mut GlGraphics) {
+        use graphics::*;
+
+        let border = rectangle::Rectangle::new_border(YELLOW, 1.0);
+        let rect = rectangle::rectangle_by_corners(BASE_X as f64 - 1.0,
+                                                   0.0,
+                                                   BASE_X as f64 + (WIDTH * 10.0) + 1.0,
+                                                   600.0);
+        border.draw(rect, &c.draw_state, c.transform, gl);
     }
 }

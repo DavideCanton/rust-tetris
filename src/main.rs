@@ -27,6 +27,7 @@ use glutin_window::GlutinWindow;
 use app::*;
 use std::rc::Rc;
 use std::cell::RefCell;
+use utils::{WIN_H, WIN_W};
 
 
 fn configure<W: Window>(win : &mut Rc<RefCell<PistonWindow<W>>>) {
@@ -37,7 +38,7 @@ fn configure<W: Window>(win : &mut Rc<RefCell<PistonWindow<W>>>) {
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [800, 600])
+    let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W as u32, WIN_H as u32])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
