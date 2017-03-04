@@ -7,6 +7,7 @@ pub const R: isize = 20;
 pub const C: isize = 10;
 
 pub const INITIAL_MOVE_DOWN_THRESHOLD: f64 = 0.5;
+pub const SPED_UP_THRESHOLD: f64 = 0.05;
 pub const WIDTH: f64 = 30.0;
 pub const WIN_W: u32 = 800;
 pub const WIN_H: u32 = 600;

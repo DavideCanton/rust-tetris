@@ -15,7 +15,6 @@ pub struct App<W: Window> {
     gl: GlGraphics,
     window: Rc<RefCell<PistonWindow<W>>>,
     board: TetrisBoard,
-    speed: f64,
     r: isize,
     c: isize,
     pause: bool,
@@ -26,6 +25,7 @@ pub struct App<W: Window> {
     last_movement: f64,
     removed_rows: i32,
     current_threshold: f64,
+    old_threshold_sped_up: Option<f64>,
     buffer_next_pieces: VecDeque<PieceInfo>,
 }
 
@@ -38,7 +38,6 @@ impl<W: Window> App<W> {
             window: window,
             r: 0,
             c: 0,
-            speed: 1.0,
             just_placed: false,
             pause: false,
             piece: None,
@@ -47,6 +46,7 @@ impl<W: Window> App<W> {
             removed_rows: 0,
             last_movement: 0f64,
             current_threshold: INITIAL_MOVE_DOWN_THRESHOLD,
+            old_threshold_sped_up: None,
             buffer_next_pieces: VecDeque::with_capacity(5),
         }
     }
@@ -76,14 +76,13 @@ impl<W: Window> App<W> {
                     for j in 0..pieceBoard.cols {
                         let p = pieceBoard.get(i, j);
 
-                        let i = i as isize;
-                        let j = j as isize;
+                        if let Some(p) = p {
 
-                        App::<W>::draw_next_block(i as isize,
-                                                  j as isize,
-                                                  &next_piece.piece,
-                                                  &ctx,
-                                                  gl);
+                            let i = i as isize;
+                            let j = j as isize;
+
+                            App::<W>::draw_next_block(i as isize, j as isize, &p, &ctx, gl);
+                        }
                     }
                 }
             }
@@ -150,20 +149,14 @@ impl<W: Window> App<W> {
         let piece = self.piece.as_ref().unwrap();
         self.board.finalize(piece, self.r as isize, self.c as isize);
         let old_removed_rows = self.removed_rows;
-        self.removed_rows += self.board.remove_completed_rows(Some(20));
-        // println!("{} {} {} {}",
-        // old_removed_rows,
-        // self.removed_rows,
-        // old_removed_rows / 10,
-        // self.removed_rows / 10);
+        self.removed_rows += self.board.remove_completed_rows(Some(20));        
         if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
-            println!("Increasing difficulty");
             self.current_threshold -= 0.1;
         }
     }
 
     pub fn update(&mut self, args: &UpdateArgs) {
-        self.time += args.dt * self.speed;
+        self.time += args.dt;
 
         if self.just_placed {
             {
@@ -198,6 +191,10 @@ impl<W: Window> App<W> {
                 self.next_block();
             }
         }
+
+
+        self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
+        self.old_threshold_sped_up = None;
     }
 
     fn enter_key_pressed(&mut self) {
@@ -253,17 +250,22 @@ impl<W: Window> App<W> {
     }
 
     fn down_key_pressed(&mut self) {
-        self.speed = 2.0;
+        match self.old_threshold_sped_up {
+            None => {
+                self.old_threshold_sped_up = Some(self.current_threshold);
+                self.current_threshold = SPED_UP_THRESHOLD;
+            }
+            Some(_) => {}
+        }
     }
 
     pub fn process_keys(&mut self, args: &Button) {
-        if let Button::Keyboard(Key::Down) = *args {} else {
-            self.speed = 1.0;
-        }
-
-        if self.pause {
-            if let Button::Keyboard(Key::Return) = *args {} else {
-                return;
+        match *args {
+            Button::Keyboard(Key::Return) => {}
+            _ => {
+                if self.pause {
+                    return;
+                }
             }
         }
 
@@ -296,7 +298,8 @@ impl<W: Window> App<W> {
         self.c = C / 2 - 1;
         self.piece = Some(piece);
         self.new_block_in_buffer();
-        self.speed = 1.0;
+        self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
+        self.old_threshold_sped_up = None;
         self.just_placed = true;
     }
 

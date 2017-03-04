@@ -53,11 +53,7 @@ impl TetrisBoard {
     }
 
     pub fn is_complete(&self, i: isize) -> bool {
-        let c = self.data[i as usize].iter().all(|cell| cell.is_some());
-
-        //println!("Is row {} complete? {}", i, c);
-
-        c
+        self.data[i as usize].iter().all(|cell| cell.is_some())
     }
 
     pub fn finalize(&mut self, piece: &PieceInfo, r: isize, c: isize) {
@@ -129,12 +125,10 @@ impl TetrisBoard {
         let last_to_copy_rev = self.rows - last_to_copy;
 
         for i in range_inclusive(from, to + 1, -1) {
-            //println!("Clearing {}", i);
             self.data[i as usize] = self.empty_row_proto.clone();
         }
         for i in range_inclusive(to, last_to_copy_rev, -1) {
             let row_to_clear = i as usize + offset as usize;
-            //println!("Swapping {} with {}", i, row_to_clear);
             self.data.swap(i as usize, row_to_clear);
         }
     }

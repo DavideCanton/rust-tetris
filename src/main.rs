@@ -38,7 +38,7 @@ fn configure<W: Window>(win : &mut Rc<RefCell<PistonWindow<W>>>) {
 fn main() {
     let opengl = OpenGL::V3_2;
 
-    let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W as u32, WIN_H as u32])
+    let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W, WIN_H])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
