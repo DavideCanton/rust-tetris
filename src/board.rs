@@ -97,7 +97,7 @@ impl TetrisBoard {
             }
         }
 
-        //println!("Got to remove {:?}", ranges);
+        // println!("Got to remove {:?}", ranges);
 
         for range in &ranges {
             self.remove_rows(range.0, range.1, last_to_copy);

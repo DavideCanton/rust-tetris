@@ -30,7 +30,7 @@ use std::cell::RefCell;
 use utils::{WIN_H, WIN_W};
 
 
-fn configure<W: Window>(win : &mut Rc<RefCell<PistonWindow<W>>>) {
+fn configure<W: Window>(win: &mut Rc<RefCell<PistonWindow<W>>>) {
     let mut win = win.borrow_mut();
     win.events.set_max_fps(60);
 }
@@ -58,13 +58,13 @@ fn main() {
         {
             match rcw.borrow_mut().next() {
                 None => return,
-                Some(s) => e = s
+                Some(s) => e = s,
             };
         }
 
         if let Some(r) = e.render_args() {
             app.render(&r);
-        }
+        }        
 
         if let Some(p) = e.press_args() {
             app.process_keys(&p);

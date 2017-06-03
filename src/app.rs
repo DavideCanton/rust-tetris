@@ -70,6 +70,7 @@ impl<W: Window> App<W> {
 
             App::<W>::draw_border(&ctx, gl);
 
+            // draw next block
             if let Some(next_piece) = next_block {
                 let pieceBoard = &next_piece.board;
                 for i in 0..pieceBoard.rows {
@@ -149,7 +150,7 @@ impl<W: Window> App<W> {
         let piece = self.piece.as_ref().unwrap();
         self.board.finalize(piece, self.r as isize, self.c as isize);
         let old_removed_rows = self.removed_rows;
-        self.removed_rows += self.board.remove_completed_rows(Some(20));        
+        self.removed_rows += self.board.remove_completed_rows(Some(20));
         if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
             self.current_threshold -= 0.1;
         }
@@ -201,7 +202,7 @@ impl<W: Window> App<W> {
         self.pause = !self.pause;
     }
 
-    fn left_key_pressed(&mut self) {
+    fn left_key_pressed(&mut self) {        
         let piece = self.piece.as_ref().unwrap();
         let first_col = piece.board.get_first_set_col().unwrap() as isize;
 
