@@ -39,10 +39,10 @@ fn main() {
     let opengl = OpenGL::V3_2;
 
     let window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W, WIN_H])
-        .opengl(opengl)
-        .exit_on_esc(true)
-        .build()
-        .unwrap();
+                                                 .opengl(opengl)
+                                                 .exit_on_esc(true)
+                                                 .build()
+                                                 .unwrap();
 
     let mut rcw = Rc::new(RefCell::new(window));
 
