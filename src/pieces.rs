@@ -34,7 +34,7 @@ pub struct PieceInfo {
 impl PieceInfo {
     pub fn new(piece: TetrisPiece) -> Self {
         let mut pi = PieceInfo {
-            piece: piece,
+            piece,
             rotation: PieceRotation::UP,
             board: TetrisBoard::new(0, 0),
         };
@@ -62,10 +62,10 @@ impl PieceInfo {
                 let i = i as isize;
                 let j = j as isize;
 
-                let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(r + i, j + c);
+                let p_cell = self.board.is_set(i, j);
+                let m_cell = matrix.is_set(r + i, j + c);
 
-                if pcell && mcell {
+                if p_cell && m_cell {
                     panic!("Piece overlapping matrix!");
                 }
 
@@ -73,9 +73,9 @@ impl PieceInfo {
                     return false;
                 }
 
-                let mncell = matrix.is_set(r + i, j + c - 1);
+                let mn_cell = matrix.is_set(r + i, j + c - 1);
 
-                if pcell && mncell {
+                if p_cell && mn_cell {
                     return true;
                 }
             }

@@ -14,8 +14,8 @@ pub struct TetrisBoard {
 impl TetrisBoard {
     pub fn new(rows: isize, cols: isize) -> Self {
         let mut board = TetrisBoard {
-            rows: rows,
-            cols: cols,
+            rows,
+            cols,
             data: Vec::with_capacity(rows as usize),
             empty_row_proto: vec![None; cols as usize],
         };
@@ -62,9 +62,7 @@ impl TetrisBoard {
 
         for i in 0..h {
             for j in 0..w {
-                let pcell = piece.board.is_set(i, j);
-
-                if pcell {
+                if piece.board.is_set(i, j) {
                     self.set(i + r, j + c, piece.piece);
                 }
             }
@@ -165,10 +163,10 @@ impl Debug for TetrisBoard {
 
                 let c = cell.map_or(' ', |_| '*');
 
-                try!(write!(formatter, "{}", c))
+                write!(formatter, "{}", c)?
             }
 
-            try!(write!(formatter, "{}", "\n"))
+            write!(formatter, "{}", "\n")?
         }
 
         Ok(())
@@ -176,7 +174,6 @@ impl Debug for TetrisBoard {
 }
 
 #[cfg(test)]
-#[allow(non_snake_case)]
 mod tests {
     use super::TetrisBoard;
     use pieces::TetrisPiece;

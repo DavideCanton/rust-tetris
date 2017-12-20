@@ -3,17 +3,15 @@ use opengl_graphics::{GlGraphics, OpenGL};
 use board::TetrisBoard;
 use pieces::*;
 use utils::*;
-use graphics;
 use rand::{Rng, ThreadRng, thread_rng};
 use std::collections::VecDeque;
 use enum_primitive::FromPrimitive;
-use piston_window::{Window, PistonWindow};
-use std::rc::Rc;
+use controller::{Controller, ControllerKey};
 use std::cell::RefCell;
+use drawer::Drawer;
 
-pub struct App<W: Window> {
-    gl: GlGraphics,
-    window: Rc<RefCell<PistonWindow<W>>>,
+pub struct App {
+    gl: RefCell<GlGraphics>,
     board: TetrisBoard,
     r: isize,
     c: isize,
@@ -22,6 +20,7 @@ pub struct App<W: Window> {
     piece: Option<PieceInfo>,
     rng: ThreadRng,
     time: f64,
+    controller: Controller,
     last_movement: f64,
     removed_rows: i32,
     current_threshold: f64,
@@ -30,12 +29,12 @@ pub struct App<W: Window> {
 }
 
 
-impl<W: Window> App<W> {
-    pub fn new(opengl: OpenGL, window: Rc<RefCell<PistonWindow<W>>>) -> Self {
+impl App {
+    pub fn new(opengl: OpenGL, controller: Controller) -> Self {
         App {
-            gl: GlGraphics::new(opengl),
+            gl: RefCell::new(GlGraphics::new(opengl)),
+            controller,
             board: TetrisBoard::new(R, C),
-            window: window,
             r: 0,
             c: 0,
             just_placed: false,
@@ -51,99 +50,109 @@ impl<W: Window> App<W> {
         }
     }
 
-    pub fn is_paused(&self) -> bool {
-        self.pause
-    }
-
-    pub fn render(&mut self, args: &RenderArgs) {
-        use graphics::*;
-
-        let board = &self.board;
-        let pieceMOpt = &self.piece;
-        let r = self.r as isize;
-        let c = self.c as isize;
-        let pause = self.is_paused();
-        let next_block = self.buffer_next_pieces.back();
-
-        self.gl.draw(args.viewport(), |ctx, gl| {
-            clear(BGCOLOR, gl);
-
-            App::<W>::draw_border(&ctx, gl);
-
-            // draw next block
-            if let Some(next_piece) = next_block {
-                let pieceBoard = &next_piece.board;
-                for i in 0..pieceBoard.rows {
-                    for j in 0..pieceBoard.cols {
-                        let p = pieceBoard.get(i, j);
-
-                        if let Some(p) = p {
-
-                            let i = i as isize;
-                            let j = j as isize;
-
-                            App::<W>::draw_next_block(i as isize, j as isize, &p, &ctx, gl);
-                        }
-                    }
-                }
-            }
-
-            for i in 0..board.rows {
-                for j in 0..board.cols {
-                    let p = board.get(i, j);
-
-                    if let Some(piece) = p {
-                        App::<W>::draw_piece_block(i as isize, j as isize, piece, &ctx, gl, false);
-                    }
-                }
-            }
-
-            if let Some(pieceInfo) = pieceMOpt.as_ref() {
-                let pieceM = &pieceInfo.board;
-
-                // compute position for shadow
-                let mut shadow_r = r;
-
-                while !pieceInfo.collides_on_next(shadow_r, c, board) {
-                    shadow_r += 1;
-                }
-
-                for i in 0..pieceM.rows {
-                    for j in 0..pieceM.cols {
-                        let p = pieceM.get(i, j);
-
-                        let i = i as isize;
-                        let j = j as isize;
-
-                        if let Some(piece) = p {
-                            if j + c >= 0 && j + c < board.cols as isize {
-                                App::<W>::draw_piece_block(i + r, j + c, piece, &ctx, gl, false);
-
-                                if !pause {
-                                    App::<W>::draw_piece_block(i + shadow_r,
-                                                               j + c,
-                                                               piece,
-                                                               &ctx,
-                                                               gl,
-                                                               true);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if pause {
-                // draw pause
-                let overlay = rectangle::rectangle_by_corners(0.0, 0.0, 800.0, 600.0);
-                rectangle(OVERLAY, overlay, ctx.transform, gl);
-            }
-        });
-    }
-
     pub fn start(&mut self) {
         self.fill_buffer();
         self.next_block();
+
+        while let Some(e) = self.controller.get_next_event() {
+            if let Some(r) = e.render_args() {
+                self.render(&r);
+            }
+
+            if let Some(p) = e.press_args() {
+                self.process_keys(&p);
+            }
+
+            if let Some(u) = e.update_args() {
+                if !self.pause {
+                    self.update(&u);
+                }
+            }
+        }
+    }
+
+    fn render_next_block(&self, drawer: &mut Drawer) {
+        if let Some(next_piece) = self.buffer_next_pieces.back() {
+            let pieceBoard = &next_piece.board;
+            self.draw_board(drawer, 355.0, 0.0, pieceBoard);
+        }
+    }
+
+    fn get_shadow_row_index(&self, pieceInfo: &PieceInfo) -> Option<isize> {
+        if self.pause {
+            None
+        } else {
+            let mut shadow_r = self.r;
+
+            while !pieceInfo.collides_on_next(shadow_r, self.c, &self.board) {
+                shadow_r += 1;
+            }
+
+            Some(shadow_r)
+        }
+    }
+
+    fn draw_block_with_shadow(&self, drawer: &mut Drawer, i: isize, j: isize, pieceM: &TetrisBoard, shadow_r: Option<isize>) {
+        let i = i as isize;
+        let j = j as isize;
+
+        let p = pieceM.get(i, j);
+        let board = &self.board;
+
+        if let Some(piece) = p {
+            if j + self.c >= 0 && j + self.c < board.cols as isize {
+                drawer.draw_piece_block(i + self.r, j + self.c, &piece, false);
+
+                if let Some(shadow_r) = shadow_r {
+                    drawer.draw_piece_block(i + shadow_r, j + self.c, &piece, true);
+                }
+            }
+        }
+    }
+
+    pub fn draw_board(&self, drawer: &mut Drawer, base_x: f64, base_y: f64, piece_board: &TetrisBoard) {
+        for i in 0..piece_board.rows {
+            for j in 0..piece_board.cols {
+                if let Some(p) = piece_board.get(i, j) {
+                    let i = i as isize;
+                    let j = j as isize;
+
+                    drawer.draw_next_block(i as isize, j as isize, &p, base_x, base_y);
+                }
+            }
+        }
+    }
+
+    pub fn render(&mut self, args: &RenderArgs) {
+        self.gl.borrow_mut().draw(args.viewport(), |ctx, gl| {
+            let mut drawer = Drawer::new(gl, ctx);
+
+            drawer.clear();
+            drawer.draw_border();
+
+            // draw next block
+            self.render_next_block(&mut drawer);
+
+            let board = &self.board;
+            self.draw_board(&mut drawer, 0.0, 0.0, board);
+
+            if let Some(pieceInfo) = self.piece.as_ref() {
+                // compute position for shadow
+                let shadow_r = self.get_shadow_row_index(pieceInfo);
+                let pieceM = &pieceInfo.board;
+
+                for i in 0..pieceM.rows {
+                    for j in 0..pieceM.cols {
+                        self.draw_block_with_shadow(&mut drawer, i as isize, j as isize, pieceM, shadow_r);
+                    }
+                }
+            }
+
+            if self.pause {
+                // draw pause
+                drawer.draw_pause();
+            }
+        });
     }
 
     fn handle_finalize(&mut self) {
@@ -160,19 +169,16 @@ impl<W: Window> App<W> {
         self.time += args.dt;
 
         if self.just_placed {
-            {
-                let piece: &PieceInfo = self.piece.as_ref().unwrap();
+            let piece = self.piece.as_ref().unwrap();
 
-                if piece.collides_on_next(self.r, self.c, &self.board) {
-                    println!("Game over!");
-                    self.window.borrow_mut().set_should_close(true);
-                }
+            if piece.collides_on_next(self.r, self.c, &self.board) {
+                println!("Game over!");
+                self.controller.close_window();
             }
         }
 
 
         if self.time - self.last_movement >= self.current_threshold {
-
             let mut next_block = false;
             self.just_placed = false;
 
@@ -202,7 +208,7 @@ impl<W: Window> App<W> {
         self.pause = !self.pause;
     }
 
-    fn left_key_pressed(&mut self) {        
+    fn left_key_pressed(&mut self) {
         let piece = self.piece.as_ref().unwrap();
         let first_col = piece.board.get_first_set_col().unwrap() as isize;
 
@@ -216,7 +222,7 @@ impl<W: Window> App<W> {
         let last_col = piece.board.get_last_set_col().unwrap() as isize;
 
         if self.c + last_col < (self.board.cols as isize) - 1 &&
-           !piece.collides_right(self.r, self.c, &self.board) {
+            !piece.collides_right(self.r, self.c, &self.board) {
             self.c += 1;
         }
     }
@@ -239,7 +245,7 @@ impl<W: Window> App<W> {
 
     fn up_key_pressed(&mut self) {
         {
-            let piece: &PieceInfo = self.piece.as_ref().unwrap();
+            let piece = self.piece.as_ref().unwrap();
 
             while !piece.collides_on_next(self.r, self.c, &self.board) {
                 self.r += 1;
@@ -260,23 +266,20 @@ impl<W: Window> App<W> {
         }
     }
 
-    pub fn process_keys(&mut self, args: &Button) {
-        match *args {
-            Button::Keyboard(Key::Return) => {}
-            _ => {
-                if self.pause {
-                    return;
-                }
-            }
+    fn exec_if_not_paused<F: Fn(&mut App)>(&mut self, ex: F) {
+        if !self.pause {
+            ex(self);
         }
+    }
 
-        match *args {
-            Button::Keyboard(Key::Left) => self.left_key_pressed(),
-            Button::Keyboard(Key::Right) => self.right_key_pressed(),
-            Button::Keyboard(Key::Space) => self.space_key_pressed(),
-            Button::Keyboard(Key::Return) => self.enter_key_pressed(),
-            Button::Keyboard(Key::Down) => self.down_key_pressed(),
-            Button::Keyboard(Key::Up) => self.up_key_pressed(),
+    pub fn process_keys(&mut self, args: &Button) {
+        match self.controller.get_key(args) {
+            Some(ControllerKey::Return) => self.enter_key_pressed(),
+            Some(ControllerKey::Left) => self.exec_if_not_paused(App::left_key_pressed),
+            Some(ControllerKey::Right) => self.exec_if_not_paused(App::right_key_pressed),
+            Some(ControllerKey::Space) => self.exec_if_not_paused(App::space_key_pressed),
+            Some(ControllerKey::Down) => self.exec_if_not_paused(App::down_key_pressed),
+            Some(ControllerKey::Up) => self.exec_if_not_paused(App::up_key_pressed),
             _ => {}
         }
     }
@@ -302,55 +305,5 @@ impl<W: Window> App<W> {
         self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
         self.old_threshold_sped_up = None;
         self.just_placed = true;
-    }
-
-    fn draw_piece_block(i: isize,
-                        j: isize,
-                        piece: TetrisPiece,
-                        c: &graphics::Context,
-                        gl: &mut GlGraphics,
-                        is_shadow: bool) {
-        use graphics::*;
-
-        let i = i as f64;
-        let j = j as f64;
-
-        let square = rectangle::square(BASE_X as f64 + j * WIDTH, i * WIDTH, WIDTH);
-        rectangle(BGCOLOR, square, c.transform, gl);
-        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 1.0,
-                                       i * WIDTH + 1.0,
-                                       WIDTH - 2.0);
-        let color = piece_to_color(piece, is_shadow);
-        rectangle(color, square, c.transform, gl);
-    }
-
-    fn draw_next_block(i: isize,
-                       j: isize,
-                       piece: &TetrisPiece,
-                       c: &graphics::Context,
-                       gl: &mut GlGraphics) {
-        use graphics::*;
-
-        let i = i as f64;
-        let j = j as f64;
-
-        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 355.0, i * WIDTH, WIDTH);
-        rectangle(BGCOLOR, square, c.transform, gl);
-        let square = rectangle::square(BASE_X as f64 + j * WIDTH + 356.0,
-                                       i * WIDTH + 1.0,
-                                       WIDTH - 2.0);
-        let color = piece_to_color(*piece, false);
-        rectangle(color, square, c.transform, gl);
-    }
-
-    fn draw_border(c: &graphics::Context, gl: &mut GlGraphics) {
-        use graphics::*;
-
-        let border = rectangle::Rectangle::new_border(YELLOW, 1.0);
-        let rect = rectangle::rectangle_by_corners(BASE_X as f64 - 1.0,
-                                                   0.0,
-                                                   BASE_X as f64 + (WIDTH * 10.0) + 1.0,
-                                                   600.0);
-        border.draw(rect, &c.draw_state, c.transform, gl);
     }
 }

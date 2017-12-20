@@ -32,8 +32,8 @@ pub const T_COLOR: F32_4 = PURPLE;
 pub const L_COLOR: F32_4 = BLUE;
 pub const J_COLOR: F32_4 = ORANGE;
 
-pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> F32_4 {
-    let original_color = match p {
+pub fn piece_to_color(p: &TetrisPiece, is_shadow: bool) -> F32_4 {
+    let original_color = match *p {
         TetrisPiece::O => O_COLOR,
         TetrisPiece::I => I_COLOR,
         TetrisPiece::S => S_COLOR,
@@ -43,7 +43,7 @@ pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> F32_4 {
         TetrisPiece::J => J_COLOR,
     };
 
-    let mut color = [0.0, 0.0, 0.0, 0.0];
+    let mut color = [0.0; 4];
     color.copy_from_slice(&original_color);
 
     if is_shadow {
@@ -54,7 +54,7 @@ pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> F32_4 {
 }
 
 pub struct MyInclusiveRange<T>
-    where T: Eq + Add<Output = T> + Copy + Ord
+    where T: Eq + Add<Output=T> + Copy + Ord
 {
     start: T,
     end: T,
@@ -64,7 +64,7 @@ pub struct MyInclusiveRange<T>
 }
 
 impl<T> MyInclusiveRange<T>
-    where T: Eq + Add<Output = T> + Copy + Ord
+    where T: Eq + Add<Output=T> + Copy + Ord
 {
     fn is_ascending(&self) -> bool {
         self.start + self.step > self.start
@@ -88,7 +88,7 @@ impl<T> MyInclusiveRange<T>
 }
 
 impl<T> Iterator for MyInclusiveRange<T>
-    where T: Eq + Add<Output = T> + Copy + Ord
+    where T: Eq + Add<Output=T> + Copy + Ord
 {
     type Item = T;
 
@@ -110,13 +110,13 @@ impl<T> Iterator for MyInclusiveRange<T>
 }
 
 pub fn range_inclusive<T>(start: T, end: T, step: T) -> MyInclusiveRange<T>
-    where T: Eq + Add<Output = T> + Copy + Ord
+    where T: Eq + Add<Output=T> + Copy + Ord
 {
     MyInclusiveRange {
         done: false,
-        start: start,
-        end: end,
-        step: step,
+        start,
+        end,
+        step,
         cur: start,
     }
 }
