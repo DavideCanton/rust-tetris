@@ -1,14 +1,15 @@
-use piston::input::*;
-use opengl_graphics::{GlGraphics, OpenGL};
 use board::TetrisBoard;
-use pieces::*;
-use utils::*;
-use rand::{Rng, ThreadRng, thread_rng};
-use std::collections::VecDeque;
-use enum_primitive::FromPrimitive;
 use controller::{Controller, ControllerKey};
-use std::cell::RefCell;
 use drawer::Drawer;
+use enum_primitive::FromPrimitive;
+use opengl_graphics::{GlGraphics, OpenGL};
+use pieces::*;
+use piston::input::*;
+use rand::prelude::ThreadRng;
+use rand::{thread_rng, Rng};
+use std::cell::RefCell;
+use std::collections::VecDeque;
+use utils::*;
 
 pub struct App {
     gl: RefCell<GlGraphics>,
@@ -27,7 +28,6 @@ pub struct App {
     old_threshold_sped_up: Option<f64>,
     buffer_next_pieces: VecDeque<PieceInfo>,
 }
-
 
 impl App {
     pub fn new(opengl: OpenGL, controller: Controller) -> Self {
@@ -92,7 +92,14 @@ impl App {
         }
     }
 
-    fn draw_block_with_shadow(&self, drawer: &mut Drawer, i: isize, j: isize, pieceM: &TetrisBoard, shadow_r: Option<isize>) {
+    fn draw_block_with_shadow(
+        &self,
+        drawer: &mut Drawer,
+        i: isize,
+        j: isize,
+        pieceM: &TetrisBoard,
+        shadow_r: Option<isize>,
+    ) {
         let i = i as isize;
         let j = j as isize;
 
@@ -110,7 +117,13 @@ impl App {
         }
     }
 
-    pub fn draw_board(&self, drawer: &mut Drawer, base_x: f64, base_y: f64, piece_board: &TetrisBoard) {
+    pub fn draw_board(
+        &self,
+        drawer: &mut Drawer,
+        base_x: f64,
+        base_y: f64,
+        piece_board: &TetrisBoard,
+    ) {
         for i in 0..piece_board.rows {
             for j in 0..piece_board.cols {
                 if let Some(p) = piece_board.get(i, j) {
@@ -143,7 +156,13 @@ impl App {
 
                 for i in 0..pieceM.rows {
                     for j in 0..pieceM.cols {
-                        self.draw_block_with_shadow(&mut drawer, i as isize, j as isize, pieceM, shadow_r);
+                        self.draw_block_with_shadow(
+                            &mut drawer,
+                            i as isize,
+                            j as isize,
+                            pieceM,
+                            shadow_r,
+                        );
                     }
                 }
             }
@@ -177,7 +196,6 @@ impl App {
             }
         }
 
-
         if self.time - self.last_movement >= self.current_threshold {
             let mut next_block = false;
             self.just_placed = false;
@@ -198,7 +216,6 @@ impl App {
                 self.next_block();
             }
         }
-
 
         self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
         self.old_threshold_sped_up = None;
@@ -221,8 +238,9 @@ impl App {
         let piece = self.piece.as_ref().unwrap();
         let last_col = piece.board.get_last_set_col().unwrap() as isize;
 
-        if self.c + last_col < (self.board.cols as isize) - 1 &&
-            !piece.collides_right(self.r, self.c, &self.board) {
+        if self.c + last_col < (self.board.cols as isize) - 1
+            && !piece.collides_right(self.r, self.c, &self.board)
+        {
             self.c += 1;
         }
     }

@@ -1,5 +1,4 @@
 use pieces::{TetrisPiece, PieceInfo};
-use utils::range_inclusive;
 use std::fmt::{Formatter, Debug, Result};
 
 pub type TetrisCell = Option<TetrisPiece>;
@@ -75,7 +74,7 @@ impl TetrisBoard {
         let mut from = None;
         let mut to: Option<isize> = None;
 
-        for i in range_inclusive(self.data.len() as isize - 1, 0, -1) {
+        for i in (0..self.data.len()).rev() {
             let i = i as isize;
 
             if self.is_complete(i) {
@@ -122,10 +121,10 @@ impl TetrisBoard {
         let last_to_copy = last_to_copy.unwrap_or(offset);
         let last_to_copy_rev = self.rows - last_to_copy;
 
-        for i in range_inclusive(from, to + 1, -1) {
+        for i in ((to + 1)..=from).rev() {
             self.data[i as usize] = self.empty_row_proto.clone();
         }
-        for i in range_inclusive(to, last_to_copy_rev, -1) {
+        for i in (last_to_copy_rev..=to).rev() {
             let row_to_clear = i as usize + offset as usize;
             self.data.swap(i as usize, row_to_clear);
         }

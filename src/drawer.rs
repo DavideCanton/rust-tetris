@@ -4,15 +4,15 @@ use pieces::TetrisPiece;
 use utils::*;
 
 type GL = GlGraphics;
-type CTX = graphics::Context;
+type Ctx = graphics::Context;
 
 pub struct Drawer<'a> {
     gl: &'a mut GL,
-    ctx: CTX,
+    ctx: Ctx,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(gl: &'a mut GL, ctx: CTX) -> Self {
+    pub fn new(gl: &'a mut GL, ctx: Ctx) -> Self {
         Drawer { gl, ctx }
     }
 
