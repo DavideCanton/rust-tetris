@@ -2,11 +2,11 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
+extern crate glutin_window;
+extern crate graphics;
+extern crate opengl_graphics;
 extern crate piston;
 extern crate piston_window;
-extern crate graphics;
-extern crate glutin_window;
-extern crate opengl_graphics;
 extern crate rand;
 
 #[macro_use]
@@ -16,19 +16,19 @@ extern crate num;
 #[macro_use]
 mod app;
 mod board;
-mod pieces;
-mod utils;
 mod controller;
 mod drawer;
+mod pieces;
+mod utils;
 
-use piston::window::WindowSettings;
-use piston_window::{Window, PistonWindow};
-use piston::event_loop::*;
-use opengl_graphics::OpenGL;
+use crate::app::*;
+use crate::controller::Controller;
+use crate::utils::{WIN_H, WIN_W};
 use glutin_window::GlutinWindow;
-use app::*;
-use utils::{WIN_H, WIN_W};
-use controller::Controller;
+use opengl_graphics::OpenGL;
+use piston::event_loop::*;
+use piston::window::WindowSettings;
+use piston_window::{PistonWindow, Window};
 
 fn configure<W: Window>(win: &mut PistonWindow<W>) {
     win.events.set_max_fps(60);

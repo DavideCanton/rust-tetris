@@ -1,4 +1,4 @@
-use pieces::TetrisPiece;
+use crate::pieces::TetrisPiece;
 
 pub type F32_4 = [f32; 4];
 

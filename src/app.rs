@@ -1,15 +1,15 @@
-use board::TetrisBoard;
-use controller::{Controller, ControllerKey};
-use drawer::Drawer;
+use crate::board::TetrisBoard;
+use crate::controller::{Controller, ControllerKey};
+use crate::drawer::Drawer;
+use crate::pieces::*;
+use crate::utils::*;
 use enum_primitive::FromPrimitive;
 use opengl_graphics::{GlGraphics, OpenGL};
-use pieces::*;
 use piston::input::*;
 use rand::prelude::ThreadRng;
 use rand::{thread_rng, Rng};
 use std::cell::RefCell;
 use std::collections::VecDeque;
-use utils::*;
 
 pub struct App {
     gl: RefCell<GlGraphics>,

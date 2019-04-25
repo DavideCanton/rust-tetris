@@ -1,6 +1,6 @@
-use std::cmp::max;
+use crate::board::TetrisBoard;
 use num::FromPrimitive;
-use board::TetrisBoard;
+use std::cmp::max;
 
 enum_from_primitive! {
     #[derive(Debug, Clone, Copy, PartialEq)]
@@ -146,7 +146,6 @@ impl PieceInfo {
         false
     }
 
-
     fn get_piece_matrix(piece: TetrisPiece, rotation: PieceRotation) -> TetrisBoard {
         let (r, c) = PieceInfo::get_piece_size(piece);
         let max_size = max(r, c);
@@ -172,9 +171,11 @@ impl PieceInfo {
         }
     }
 
-    pub fn fill_piece_matrix(piece: TetrisPiece,
-                             matrix: &mut TetrisBoard,
-                             rotation: PieceRotation) {
+    pub fn fill_piece_matrix(
+        piece: TetrisPiece,
+        matrix: &mut TetrisBoard,
+        rotation: PieceRotation,
+    ) {
         let matrix_str = match piece {
             // O can't rotate
             TetrisPiece::O => PieceInfo::get_rotations_O(),
@@ -260,11 +261,10 @@ impl PieceInfo {
     }
 }
 
-
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod tests {
-    use super::{TetrisPiece, PieceRotation, PieceInfo};
+    use super::{PieceInfo, PieceRotation, TetrisPiece};
 
     #[test]
     fn test_get_piece_size() {

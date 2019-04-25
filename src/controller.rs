@@ -1,6 +1,6 @@
-use piston::input::*;
-use piston_window::{Window, PistonWindow};
 use glutin_window::GlutinWindow;
+use piston::input::*;
+use piston_window::{PistonWindow, Window};
 
 pub enum ControllerKey {
     Left,
@@ -12,14 +12,12 @@ pub enum ControllerKey {
 }
 
 pub struct Controller {
-    window: PistonWindow<GlutinWindow>
+    window: PistonWindow<GlutinWindow>,
 }
 
 impl Controller {
     pub fn new(window: PistonWindow<GlutinWindow>) -> Self {
-        Controller{
-            window
-        }
+        Controller { window }
     }
 
     pub fn get_key(&self, args: &Button) -> Option<ControllerKey> {

@@ -1,5 +1,5 @@
-use pieces::{TetrisPiece, PieceInfo};
-use std::fmt::{Formatter, Debug, Result};
+use crate::pieces::{PieceInfo, TetrisPiece};
+use std::fmt::{Debug, Formatter, Result};
 
 pub type TetrisCell = Option<TetrisPiece>;
 
@@ -37,7 +37,6 @@ impl TetrisBoard {
             self.data[i as usize][j as usize].is_some()
         }
     }
-
 
     pub fn set(&mut self, i: isize, j: isize, p: TetrisPiece) {
         self.set_val(i, j, Some(p));
@@ -83,7 +82,6 @@ impl TetrisBoard {
                 } else {
                     to = Some(i);
                 }
-
             } else if from.is_some() {
                 let fromI = from.unwrap();
                 let toI = to.unwrap_or(fromI);
@@ -155,7 +153,6 @@ impl TetrisBoard {
 
 impl Debug for TetrisBoard {
     fn fmt(&self, formatter: &mut Formatter) -> Result {
-
         for i in 0..self.rows {
             for j in 0..self.cols {
                 let cell = self.get(i, j);
@@ -175,7 +172,7 @@ impl Debug for TetrisBoard {
 #[cfg(test)]
 mod tests {
     use super::TetrisBoard;
-    use pieces::TetrisPiece;
+    use crate::pieces::TetrisPiece;
 
     fn load_board(board: &mut TetrisBoard, s: &str) {
         let c = board.cols;
@@ -193,7 +190,6 @@ mod tests {
 
     #[test]
     fn test_remove_rows() {
-
         let mut board = TetrisBoard::new(5, 3);
 
         load_board(&mut board, "     *  *******");
@@ -219,7 +215,6 @@ mod tests {
 
     #[test]
     fn test_remove_rows3() {
-
         let mut board = TetrisBoard::new(5, 3);
 
         load_board(&mut board, "      *********");
