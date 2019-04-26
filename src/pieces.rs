@@ -54,6 +54,11 @@ impl PieceInfo {
         self.setup_board();
     }
 
+    pub fn rotate_piece_prev(&mut self) {
+        self.rotation = PieceInfo::prev_rotation(self.rotation);
+        self.setup_board();
+    }
+
     pub fn collides_left(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
         let w = self.board.cols;
         let h = self.board.rows;
@@ -161,6 +166,12 @@ impl PieceInfo {
     fn next_rotation(rotation: PieceRotation) -> PieceRotation {
         let mut i = rotation as u8;
         i = (i + 3) % 4;
+        PieceRotation::from_u8(i).unwrap()
+    }
+
+    fn prev_rotation(rotation: PieceRotation) -> PieceRotation {
+        let mut i = rotation as u8;
+        i = (i + 1) % 4;
         PieceRotation::from_u8(i).unwrap()
     }
 

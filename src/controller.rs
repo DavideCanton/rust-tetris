@@ -5,7 +5,8 @@ use piston_window::{PistonWindow, Window};
 pub enum ControllerKey {
     Left,
     Right,
-    Space,
+    NextRotation,
+    PrevRotation,
     Return,
     Down,
     Up,
@@ -24,7 +25,8 @@ impl Controller {
         match *args {
             Button::Keyboard(Key::Left) => Some(ControllerKey::Left),
             Button::Keyboard(Key::Right) => Some(ControllerKey::Right),
-            Button::Keyboard(Key::Space) => Some(ControllerKey::Space),
+            Button::Keyboard(Key::N) => Some(ControllerKey::NextRotation),
+            Button::Keyboard(Key::B) => Some(ControllerKey::PrevRotation),
             Button::Keyboard(Key::Return) => Some(ControllerKey::Return),
             Button::Keyboard(Key::Down) => Some(ControllerKey::Down),
             Button::Keyboard(Key::Up) => Some(ControllerKey::Up),

@@ -245,11 +245,11 @@ impl App {
         }
     }
 
-    fn space_key_pressed(&mut self) {
+    fn rot_pressed<F: Fn(&mut PieceInfo)>(&mut self, action: F) {
         let c = self.c as isize;
         let piece = self.piece.as_mut().unwrap();
 
-        piece.rotate_piece();
+        action(piece);
 
         let first_col = piece.board.get_first_set_col().unwrap() as isize;
         let last_col = piece.board.get_last_set_col().unwrap() as isize;
@@ -259,6 +259,14 @@ impl App {
         } else if c + last_col >= (self.board.cols as isize) - 1 {
             self.c -= c + last_col - self.board.cols as isize + 1;
         }
+    }
+
+    fn next_rot_pressed(&mut self) {
+        self.rot_pressed(|p| p.rotate_piece());
+    }
+
+    fn prev_rot_pressed(&mut self) {
+        self.rot_pressed(|p| p.rotate_piece_prev());
     }
 
     fn up_key_pressed(&mut self) {
@@ -295,7 +303,8 @@ impl App {
             Some(ControllerKey::Return) => self.enter_key_pressed(),
             Some(ControllerKey::Left) => self.exec_if_not_paused(App::left_key_pressed),
             Some(ControllerKey::Right) => self.exec_if_not_paused(App::right_key_pressed),
-            Some(ControllerKey::Space) => self.exec_if_not_paused(App::space_key_pressed),
+            Some(ControllerKey::NextRotation) => self.exec_if_not_paused(App::next_rot_pressed),
+            Some(ControllerKey::PrevRotation) => self.exec_if_not_paused(App::prev_rot_pressed),
             Some(ControllerKey::Down) => self.exec_if_not_paused(App::down_key_pressed),
             Some(ControllerKey::Up) => self.exec_if_not_paused(App::up_key_pressed),
             _ => {}
