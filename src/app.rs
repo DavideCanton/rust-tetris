@@ -270,12 +270,10 @@ impl App {
     }
 
     fn up_key_pressed(&mut self) {
-        {
-            let piece = self.piece.as_ref().unwrap();
+        let piece = self.piece.as_ref().unwrap();
 
-            while !piece.collides_on_next(self.r, self.c, &self.board) {
-                self.r += 1;
-            }
+        while !piece.collides_on_next(self.r, self.c, &self.board) {
+            self.r += 1;
         }
 
         self.handle_finalize();

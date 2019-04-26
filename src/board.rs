@@ -101,12 +101,12 @@ impl TetrisBoard {
         ranges.iter().map(|r| (r.0 - r.1) as i32).sum()
     }
 
-    pub fn rows<'a>(&'a self) -> Box<Iterator<Item = &'a Vec<TetrisCell>> + 'a> {
-        Box::new(self.data.iter())
+    pub fn rows(&self) -> impl Iterator<Item = &Vec<TetrisCell>> {
+        self.data.iter()
     }
 
-    pub fn rows_mut<'a>(&'a mut self) -> Box<Iterator<Item = &'a mut Vec<TetrisCell>> + 'a> {
-        Box::new(self.data.iter_mut())
+    pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut Vec<TetrisCell>> {
+        self.data.iter_mut()
     }
 
     pub fn remove_rows(&mut self, from: isize, to: isize, last_to_copy: Option<isize>) {

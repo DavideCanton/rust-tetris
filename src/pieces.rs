@@ -328,6 +328,25 @@ mod tests {
     }
 
     #[test]
+    fn test_prev_rotation() {
+        let mut rotation = PieceRotation::UP;
+
+        assert_eq!(rotation, PieceRotation::UP);
+        rotation = PieceInfo::prev_rotation(rotation);
+
+        assert_eq!(rotation, PieceRotation::LEFT);
+        rotation = PieceInfo::prev_rotation(rotation);
+
+        assert_eq!(rotation, PieceRotation::DOWN);
+        rotation = PieceInfo::prev_rotation(rotation);
+
+        assert_eq!(rotation, PieceRotation::RIGHT);
+        rotation = PieceInfo::prev_rotation(rotation);
+
+        assert_eq!(rotation, PieceRotation::UP);
+    }
+
+    #[test]
     fn test_fill_matrix_O() {
         let mut info = PieceInfo::new(TetrisPiece::O);
 
