@@ -1,4 +1,5 @@
 use crate::board::TetrisBoard;
+use enum_primitive::*;
 use num::FromPrimitive;
 use std::cmp::max;
 

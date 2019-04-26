@@ -2,17 +2,6 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
-extern crate glutin_window;
-extern crate graphics;
-extern crate opengl_graphics;
-extern crate piston;
-extern crate piston_window;
-extern crate rand;
-
-#[macro_use]
-extern crate enum_primitive;
-extern crate num;
-
 #[macro_use]
 mod app;
 mod board;
