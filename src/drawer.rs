@@ -1,3 +1,4 @@
+use crate::drawables::drawable_piece::DrawablePiece;
 use crate::{
     drawables::{
         border::Border, drawable_obj::DrawableObject, pause_overlay::PauseOverlay, square::Square,
@@ -18,17 +19,7 @@ impl<'a> Drawer<'a> {
         Drawer { gl, ctx }
     }
 
-    pub fn draw_piece_block(&mut self, i: isize, j: isize, piece: TetrisPiece, is_shadow: bool) {
-        let i = i as Scalar;
-        let j = j as Scalar;
-
-        let pos = [BASE_X as Scalar + j * WIDTH, i * WIDTH];
-        let color = piece_to_color(&piece, is_shadow);
-        let sq = Square::new(pos, WIDTH, color);
-        sq.draw_object(self.gl, self.ctx);
-    }
-
-    pub fn draw_next_block(
+    pub fn draw_square(
         &mut self,
         i: isize,
         j: isize,
@@ -42,6 +33,20 @@ impl<'a> Drawer<'a> {
         let pos = [BASE_X as Scalar + j * WIDTH + base_x, i * WIDTH + base_y];
         let sq = Square::new(pos, WIDTH, piece_to_color(&piece, false));
         sq.draw_object(self.gl, self.ctx);
+    }
+
+    pub fn draw_piece_block(&mut self, i: isize, j: isize, piece: TetrisPiece, is_shadow: bool) {
+        let i = i as Scalar;
+        let j = j as Scalar;
+
+        let pos = [BASE_X as Scalar + j * WIDTH, i * WIDTH];
+        let color = piece_to_color(&piece, is_shadow);
+        let sq = Square::new(pos, WIDTH, color);
+        sq.draw_object(self.gl, self.ctx);
+    }
+
+    pub fn draw_next_block(&mut self, dp: &DrawablePiece) {
+        dp.draw_object(self.gl, self.ctx);
     }
 
     pub fn draw_border(&mut self) {

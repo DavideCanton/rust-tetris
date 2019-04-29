@@ -74,9 +74,16 @@ impl App {
     }
 
     fn render_next_block(&self, drawer: &mut Drawer) {
-        if let Some(next_piece) = self.buffer_next_pieces.back() {
-            let pieceBoard = &next_piece.board;
-            self.draw_board(drawer, 355.0, 0.0, pieceBoard);
+        let mut i = 0.0;
+        let mut s = 0.0;
+
+        for np in self.buffer_next_pieces.iter().rev().take(3) {
+            let offset = if i == 0.0 { 0.0 } else { 50.0 };
+            let pos = [BASE_X as Scalar + 355.0 + offset, s];
+            s += np.height() as Scalar * WIDTH + 5.0;
+            let dp = DrawablePiece::new(pos, np, false);
+            drawer.draw_next_block(&dp);
+            i += 1.0;
         }
     }
 
@@ -107,7 +114,7 @@ impl App {
                     let i = i as isize;
                     let j = j as isize;
 
-                    drawer.draw_next_block(i as isize, j as isize, p, base_x, base_y);
+                    drawer.draw_square(i as isize, j as isize, p, base_x, base_y);
                 }
             }
         }
