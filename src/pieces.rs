@@ -59,9 +59,17 @@ impl PieceInfo {
         self.setup_board();
     }
 
+    pub fn width(&self) -> isize {
+        return self.board.cols;
+    }
+
+    pub fn height(&self) -> isize {
+        return self.board.rows;
+    }
+
     pub fn collides_left(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
-        let w = self.board.cols;
-        let h = self.board.rows;
+        let w = self.width();
+        let h = self.height();
 
         for i in 0..h {
             for j in 0..w {

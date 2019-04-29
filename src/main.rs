@@ -9,6 +9,7 @@ mod controller;
 mod drawer;
 mod pieces;
 mod utils;
+mod drawables;
 
 use crate::app::*;
 use crate::controller::Controller;

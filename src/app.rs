@@ -1,15 +1,17 @@
-use crate::board::TetrisBoard;
-use crate::controller::{Controller, ControllerKey};
-use crate::drawer::Drawer;
-use crate::pieces::*;
-use crate::utils::*;
+use crate::{
+    board::TetrisBoard,
+    controller::{Controller, ControllerKey},
+    drawables::{drawable_obj::DrawableObject, drawable_piece::DrawablePiece},
+    drawer::Drawer,
+    pieces::{PieceInfo, TetrisPiece},
+    utils::{BASE_X, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD, WIDTH},
+};
 use enum_primitive::FromPrimitive;
+use graphics::types::Scalar;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::*;
-use rand::prelude::ThreadRng;
-use rand::{thread_rng, Rng};
-use std::cell::RefCell;
-use std::collections::VecDeque;
+use rand::{prelude::ThreadRng, thread_rng, Rng};
+use std::{cell::RefCell, collections::VecDeque};
 
 pub struct App {
     gl: RefCell<GlGraphics>,
@@ -41,9 +43,9 @@ impl App {
             pause: false,
             piece: None,
             rng: thread_rng(),
-            time: 0f64,
+            time: 0.0,
             removed_rows: 0,
-            last_movement: 0f64,
+            last_movement: 0.0,
             current_threshold: INITIAL_MOVE_DOWN_THRESHOLD,
             old_threshold_sped_up: None,
             buffer_next_pieces: VecDeque::with_capacity(5),
@@ -92,36 +94,11 @@ impl App {
         }
     }
 
-    fn draw_block_with_shadow(
-        &self,
-        drawer: &mut Drawer,
-        i: isize,
-        j: isize,
-        pieceM: &TetrisBoard,
-        shadow_r: Option<isize>,
-    ) {
-        let i = i as isize;
-        let j = j as isize;
-
-        let p = pieceM.get(i, j);
-        let board = &self.board;
-
-        if let Some(piece) = p {
-            if j + self.c >= 0 && j + self.c < board.cols as isize {
-                drawer.draw_piece_block(i + self.r, j + self.c, &piece, false);
-
-                if let Some(shadow_r) = shadow_r {
-                    drawer.draw_piece_block(i + shadow_r, j + self.c, &piece, true);
-                }
-            }
-        }
-    }
-
     pub fn draw_board(
         &self,
         drawer: &mut Drawer,
-        base_x: f64,
-        base_y: f64,
+        base_x: Scalar,
+        base_y: Scalar,
         piece_board: &TetrisBoard,
     ) {
         for i in 0..piece_board.rows {
@@ -130,7 +107,7 @@ impl App {
                     let i = i as isize;
                     let j = j as isize;
 
-                    drawer.draw_next_block(i as isize, j as isize, &p, base_x, base_y);
+                    drawer.draw_next_block(i as isize, j as isize, p, base_x, base_y);
                 }
             }
         }
@@ -149,27 +126,32 @@ impl App {
             let board = &self.board;
             self.draw_board(&mut drawer, 0.0, 0.0, board);
 
-            if let Some(pieceInfo) = self.piece.as_ref() {
-                // compute position for shadow
-                let shadow_r = self.get_shadow_row_index(pieceInfo);
-                let pieceM = &pieceInfo.board;
-
-                for i in 0..pieceM.rows {
-                    for j in 0..pieceM.cols {
-                        self.draw_block_with_shadow(
-                            &mut drawer,
-                            i as isize,
-                            j as isize,
-                            pieceM,
-                            shadow_r,
-                        );
-                    }
-                }
-            }
-
             if self.pause {
                 // draw pause
                 drawer.draw_pause();
+            }
+
+            if let Some(pieceInfo) = self.piece.as_ref() {
+                // compute position for shadow
+                let shadow_r = self.get_shadow_row_index(pieceInfo);
+
+                let pp = [
+                    BASE_X as Scalar + self.c as Scalar * WIDTH,
+                    self.r as Scalar * WIDTH,
+                ];
+                let dpn = DrawablePiece::new(pp, pieceInfo, false);
+                dpn.draw_object(gl, ctx);
+
+                if let Some(shadow_r) = shadow_r {
+                    if self.r + pieceInfo.height() <= shadow_r {
+                        let ps = [
+                            BASE_X as Scalar + self.c as Scalar * WIDTH,
+                            shadow_r as Scalar * WIDTH,
+                        ];
+                        let dps = DrawablePiece::new(ps, pieceInfo, true);
+                        dps.draw_object(gl, ctx);
+                    }
+                }
             }
         });
     }

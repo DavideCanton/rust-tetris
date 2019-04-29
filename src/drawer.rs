@@ -1,71 +1,58 @@
-use crate::pieces::TetrisPiece;
-use crate::utils::*;
-use graphics;
+use crate::{
+    drawables::{
+        border::Border, drawable_obj::DrawableObject, pause_overlay::PauseOverlay, square::Square,
+    },
+    pieces::TetrisPiece,
+    utils::*,
+};
+use graphics::{types::Scalar, Context};
 use opengl_graphics::GlGraphics;
 
-type GL = GlGraphics;
-type Ctx = graphics::Context;
-
 pub struct Drawer<'a> {
-    gl: &'a mut GL,
-    ctx: Ctx,
+    gl: &'a mut GlGraphics,
+    ctx: Context,
 }
 
 impl<'a> Drawer<'a> {
-    pub fn new(gl: &'a mut GL, ctx: Ctx) -> Self {
+    pub fn new(gl: &'a mut GlGraphics, ctx: Context) -> Self {
         Drawer { gl, ctx }
     }
 
-    pub fn draw_piece_block(&mut self, i: isize, j: isize, piece: &TetrisPiece, is_shadow: bool) {
-        let i = i as f64;
-        let j = j as f64;
+    pub fn draw_piece_block(&mut self, i: isize, j: isize, piece: TetrisPiece, is_shadow: bool) {
+        let i = i as Scalar;
+        let j = j as Scalar;
 
-        let square = graphics::rectangle::square(BASE_X as f64 + j * WIDTH, i * WIDTH, WIDTH);
-        graphics::rectangle(BGCOLOR, square, self.ctx.transform, self.gl);
-        let square = graphics::rectangle::square(
-            BASE_X as f64 + j * WIDTH + 1.0,
-            i * WIDTH + 1.0,
-            WIDTH - 2.0,
-        );
-        let color = piece_to_color(piece, is_shadow);
-        graphics::rectangle(color, square, self.ctx.transform, self.gl);
+        let pos = [BASE_X as Scalar + j * WIDTH, i * WIDTH];
+        let color = piece_to_color(&piece, is_shadow);
+        let sq = Square::new(pos, WIDTH, color);
+        sq.draw_object(self.gl, self.ctx);
     }
 
     pub fn draw_next_block(
         &mut self,
         i: isize,
         j: isize,
-        piece: &TetrisPiece,
-        base_x: f64,
-        base_y: f64,
+        piece: TetrisPiece,
+        base_x: Scalar,
+        base_y: Scalar,
     ) {
-        let i = i as f64;
-        let j = j as f64;
+        let i = i as Scalar;
+        let j = j as Scalar;
 
-        let square = graphics::rectangle::square(
-            BASE_X as f64 + j * WIDTH + base_x,
-            i * WIDTH + base_y,
-            WIDTH,
-        );
-        graphics::rectangle(BGCOLOR, square, self.ctx.transform, self.gl);
-        let square = graphics::rectangle::square(
-            BASE_X as f64 + j * WIDTH + base_x + 1.0,
-            i * WIDTH + 1.0 + base_y,
-            WIDTH - 2.0,
-        );
-        let color = piece_to_color(piece, false);
-        graphics::rectangle(color, square, self.ctx.transform, self.gl);
+        let pos = [BASE_X as Scalar + j * WIDTH + base_x, i * WIDTH + base_y];
+        let sq = Square::new(pos, WIDTH, piece_to_color(&piece, false));
+        sq.draw_object(self.gl, self.ctx);
     }
 
     pub fn draw_border(&mut self) {
-        let border = graphics::rectangle::Rectangle::new_border(YELLOW, 1.0);
-        let rect = graphics::rectangle::rectangle_by_corners(
-            BASE_X as f64 - 1.0,
-            0.0,
-            BASE_X as f64 + (WIDTH * 10.0) + 1.0,
+        let b = Border::new(
+            [BASE_X as Scalar - 1.0, 0.0],
+            YELLOW,
+            1.0,
+            WIDTH * 10.0,
             600.0,
         );
-        border.draw(rect, &self.ctx.draw_state, self.ctx.transform, self.gl);
+        b.draw_object(self.gl, self.ctx);
     }
 
     pub fn clear(&mut self) {
@@ -73,7 +60,7 @@ impl<'a> Drawer<'a> {
     }
 
     pub fn draw_pause(&mut self) {
-        let overlay = graphics::rectangle::rectangle_by_corners(0.0, 0.0, 800.0, 600.0);
-        graphics::rectangle(OVERLAY, overlay, self.ctx.transform, self.gl);
+        let p = PauseOverlay;
+        p.draw_object(self.gl, self.ctx);
     }
 }
