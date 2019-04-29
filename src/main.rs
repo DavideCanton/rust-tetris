@@ -6,10 +6,10 @@
 mod app;
 mod board;
 mod controller;
+mod drawables;
 mod drawer;
 mod pieces;
 mod utils;
-mod drawables;
 
 use crate::app::*;
 use crate::controller::Controller;
@@ -25,7 +25,7 @@ fn configure<W: Window>(win: &mut PistonWindow<W>) {
 }
 
 fn main() {
-    let opengl = OpenGL::V3_2;
+    let opengl = OpenGL::V4_5;
 
     let mut window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W, WIN_H])
         .opengl(opengl)
@@ -33,9 +33,7 @@ fn main() {
         .build()
         .expect("Failed to init OpenGL");
 
-    {
-        configure(&mut window);
-    }
+    configure(&mut window);
 
     let controller = Controller::new(window);
     let mut app = App::new(opengl, controller);
