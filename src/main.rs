@@ -11,13 +11,12 @@ mod drawer;
 mod pieces;
 mod utils;
 
-use crate::app::*;
+use crate::app::App;
 use crate::controller::Controller;
 use crate::utils::{WIN_H, WIN_W};
 use glutin_window::GlutinWindow;
 use opengl_graphics::OpenGL;
-use piston::event_loop::*;
-use piston::window::WindowSettings;
+use piston::{event_loop::EventLoop, window::WindowSettings};
 use piston_window::{PistonWindow, Window};
 
 fn configure<W: Window>(win: &mut PistonWindow<W>) {
@@ -31,7 +30,7 @@ fn main() {
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
-        .expect("Failed to init OpenGL");
+        .expect(&format!("Failed to init OpenGL {:?}", opengl));
 
     configure(&mut window);
 
