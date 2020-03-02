@@ -27,14 +27,12 @@ fn main() {
     let opengl = OpenGL::V4_5;
 
     let mut window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W, WIN_H])
-        .opengl(opengl)
+        .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
         .expect(&format!("Failed to init OpenGL {:?}", opengl));
 
     configure(&mut window);
 
-    let controller = Controller::new(window);
-    let mut app = App::new(opengl, controller);
-    app.start();
+    App::new(opengl, Controller::new(window)).start();
 }

@@ -2,6 +2,7 @@ use glutin_window::GlutinWindow;
 use piston::input::*;
 use piston_window::{PistonWindow, Window};
 
+#[derive(Debug)]
 pub enum ControllerKey {
     Left,
     Right,
@@ -25,8 +26,8 @@ impl Controller {
         match *args {
             Button::Keyboard(Key::Left) => Some(ControllerKey::Left),
             Button::Keyboard(Key::Right) => Some(ControllerKey::Right),
-            Button::Keyboard(Key::N) => Some(ControllerKey::NextRotation),
-            Button::Keyboard(Key::B) => Some(ControllerKey::PrevRotation),
+            Button::Keyboard(Key::Z) => Some(ControllerKey::NextRotation),
+            Button::Keyboard(Key::X) => Some(ControllerKey::PrevRotation),
             Button::Keyboard(Key::Return) => Some(ControllerKey::Return),
             Button::Keyboard(Key::Down) => Some(ControllerKey::Down),
             Button::Keyboard(Key::Up) => Some(ControllerKey::Up),

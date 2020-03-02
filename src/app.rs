@@ -10,7 +10,7 @@ use enum_primitive::FromPrimitive;
 use graphics::types::Scalar;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::*;
-use rand::{prelude::ThreadRng, thread_rng, Rng};
+use rand::{prelude::ThreadRng, thread_rng, seq::SliceRandom};
 use std::{cell::RefCell, collections::VecDeque};
 
 pub struct App {
@@ -29,6 +29,7 @@ pub struct App {
     current_threshold: f64,
     old_threshold_sped_up: Option<f64>,
     buffer_next_pieces: VecDeque<PieceInfo>,
+    internal_permutation: VecDeque<TetrisPiece>,
 }
 
 impl App {
@@ -49,6 +50,7 @@ impl App {
             current_threshold: INITIAL_MOVE_DOWN_THRESHOLD,
             old_threshold_sped_up: None,
             buffer_next_pieces: VecDeque::with_capacity(5),
+            internal_permutation: VecDeque::with_capacity(7),
         }
     }
 
@@ -299,9 +301,18 @@ impl App {
     }
 
     fn new_block_in_buffer(&mut self) {
-        let n = self.rng.gen_range(0, 7);
-        let piece = TetrisPiece::from_u8(n).unwrap();
+        if self.internal_permutation.is_empty() {
+            self.fill_permutation();
+        }
+
+        let piece = self.internal_permutation.pop_front().unwrap();
         self.buffer_next_pieces.push_front(PieceInfo::new(piece));
+    }
+
+    fn fill_permutation(&mut self) {
+        let mut nums: Vec<_> = (0..7).map(|n| TetrisPiece::from_u8(n).unwrap()).collect();
+        nums.as_mut_slice().shuffle(&mut self.rng);
+        self.internal_permutation.extend(nums.into_iter());
     }
 
     fn fill_buffer(&mut self) {
