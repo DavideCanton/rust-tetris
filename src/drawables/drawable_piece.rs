@@ -1,6 +1,6 @@
 use crate::{
     drawables::{drawable_obj::DrawableObject, square::Square},
-    pieces::PieceInfo,
+    pieces::TetrisPieceStruct,
     utils::{piece_to_color, WIDTH},
 };
 use graphics::{math::Vec2d, types::Scalar, Context};
@@ -8,16 +8,16 @@ use opengl_graphics::GlGraphics;
 
 pub struct DrawablePiece<'a> {
     pos: Vec2d,
-    piece: &'a PieceInfo,
-    is_shadow: bool,
+    piece: &'a TetrisPieceStruct,
+    is_shadow: bool
 }
 
 impl<'a> DrawablePiece<'a> {
-    pub fn new(pos: Vec2d, piece: &'a PieceInfo, is_shadow: bool) -> Self {
+    pub fn new(pos: Vec2d, piece: &'a TetrisPieceStruct, is_shadow: bool) -> Self {
         DrawablePiece {
             pos,
             piece,
-            is_shadow,
+            is_shadow
         }
     }
 }
