@@ -26,8 +26,8 @@ impl Controller {
         match *args {
             Button::Keyboard(Key::Left) => Some(ControllerKey::Left),
             Button::Keyboard(Key::Right) => Some(ControllerKey::Right),
-            Button::Keyboard(Key::Z) => Some(ControllerKey::NextRotation),
-            Button::Keyboard(Key::X) => Some(ControllerKey::PrevRotation),
+            Button::Keyboard(Key::X) => Some(ControllerKey::NextRotation),
+            Button::Keyboard(Key::Z) => Some(ControllerKey::PrevRotation),
             Button::Keyboard(Key::Return) => Some(ControllerKey::Return),
             Button::Keyboard(Key::Down) => Some(ControllerKey::Down),
             Button::Keyboard(Key::Up) => Some(ControllerKey::Up),

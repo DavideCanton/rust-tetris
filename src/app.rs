@@ -1,17 +1,21 @@
 use crate::{
     board::TetrisBoard,
     controller::{Controller, ControllerKey},
-    drawables::{drawable_obj::DrawableObject, drawable_piece::DrawablePiece},
+    drawables::{
+        drawable_obj::DrawableObject, drawable_piece::DrawablePiece, rectangle::Rectangle,
+    },
     drawer::Drawer,
-    pieces::{PieceInfo, TetrisPiece},
-    utils::{BASE_X, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD, WIDTH},
+    pieces::{TetrisPiece, TetrisPieceStruct},
+    utils::{BASE_X, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD, WHITE, WIDTH},
 };
 use enum_primitive::FromPrimitive;
 use graphics::types::Scalar;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::input::*;
-use rand::{prelude::ThreadRng, thread_rng, seq::SliceRandom};
+use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 use std::{cell::RefCell, collections::VecDeque};
+
+const DEBUG: bool = false;
 
 pub struct App {
     gl: RefCell<GlGraphics>,
@@ -20,7 +24,7 @@ pub struct App {
     c: isize,
     pause: bool,
     just_placed: bool,
-    piece: Option<PieceInfo>,
+    piece: Option<TetrisPieceStruct>,
     rng: ThreadRng,
     time: f64,
     controller: Controller,
@@ -28,7 +32,7 @@ pub struct App {
     removed_rows: i32,
     current_threshold: f64,
     old_threshold_sped_up: Option<f64>,
-    buffer_next_pieces: VecDeque<PieceInfo>,
+    buffer_next_pieces: VecDeque<TetrisPieceStruct>,
     internal_permutation: VecDeque<TetrisPiece>,
 }
 
@@ -57,6 +61,29 @@ impl App {
     pub fn start(&mut self) {
         self.fill_buffer();
         self.next_block();
+        //initial setup
+        let rows = [
+            "1101111111",
+            "1101111111",
+            "1000111111",
+            "1001111111",
+            "1101111111",
+            "0001111111",
+            "0011111111",
+        ];
+
+        let mut ri = R - 1;
+        let mut ci = 0;
+        for r in &rows {
+            for c in r.chars() {
+                if c == '1' {
+                    self.board.set(ri, ci, TetrisPiece::OTHER);
+                }
+                ci += 1;
+            }
+            ri -= 1;
+            ci = 0;
+        }
 
         while let Some(e) = self.controller.get_next_event() {
             if let Some(r) = e.render_args() {
@@ -89,7 +116,7 @@ impl App {
         }
     }
 
-    fn get_shadow_row_index(&self, pieceInfo: &PieceInfo) -> Option<isize> {
+    fn get_shadow_row_index(&self, pieceInfo: &TetrisPieceStruct) -> Option<isize> {
         if self.pause {
             None
         } else {
@@ -148,6 +175,18 @@ impl App {
                     BASE_X as Scalar + self.c as Scalar * WIDTH,
                     self.r as Scalar * WIDTH,
                 ];
+
+                if DEBUG {
+                    let size = TetrisPieceStruct::get_piece_size(pieceInfo.piece);
+                    let r = Rectangle::new(
+                        pp,
+                        size.1 as Scalar * WIDTH,
+                        size.0 as Scalar * WIDTH,
+                        WHITE,
+                    );
+                    r.draw_object(gl, ctx);
+                }
+
                 let dpn = DrawablePiece::new(pp, pieceInfo, false);
                 dpn.draw_object(gl, ctx);
 
@@ -192,7 +231,7 @@ impl App {
             self.just_placed = false;
 
             {
-                let piece: &PieceInfo = self.piece.as_ref().unwrap();
+                let piece: &TetrisPieceStruct = self.piece.as_ref().unwrap();
 
                 if piece.collides_on_next(self.r, self.c, &self.board) {
                     next_block = true;
@@ -236,28 +275,41 @@ impl App {
         }
     }
 
-    fn rot_pressed<F: Fn(&mut PieceInfo)>(&mut self, action: F) {
-        let c = self.c as isize;
+    fn rot_pressed(&mut self, next: bool) {
         let piece = self.piece.as_mut().unwrap();
+        let prev_rot = piece.rotation;
 
-        action(piece);
+        if next {
+            piece.rotate_piece();
+        } else {
+            piece.rotate_piece_prev();
+        }
 
-        let first_col = piece.board.get_first_set_col().unwrap() as isize;
-        let last_col = piece.board.get_last_set_col().unwrap() as isize;
+        let mut ok = false;
+        for kick in piece.get_kicks(prev_rot) {
+            if !piece.collides(self.r, self.c, &self.board, kick) {
+                ok = true;
+                self.r -= kick.1;
+                self.c += kick.0;
+                break;
+            }
+        }
 
-        if c + first_col <= 0 {
-            self.c -= c + first_col;
-        } else if c + last_col >= (self.board.cols as isize) - 1 {
-            self.c -= c + last_col - self.board.cols as isize + 1;
+        if !ok {
+            if !next {
+                piece.rotate_piece();
+            } else {
+                piece.rotate_piece_prev();
+            }
         }
     }
 
     fn next_rot_pressed(&mut self) {
-        self.rot_pressed(|p| p.rotate_piece());
+        self.rot_pressed(true);
     }
 
     fn prev_rot_pressed(&mut self) {
-        self.rot_pressed(|p| p.rotate_piece_prev());
+        self.rot_pressed(false);
     }
 
     fn up_key_pressed(&mut self) {
@@ -306,7 +358,8 @@ impl App {
         }
 
         let piece = self.internal_permutation.pop_front().unwrap();
-        self.buffer_next_pieces.push_front(PieceInfo::new(piece));
+        self.buffer_next_pieces
+            .push_front(TetrisPieceStruct::new(piece));
     }
 
     fn fill_permutation(&mut self) {

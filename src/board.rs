@@ -1,4 +1,4 @@
-use crate::pieces::{PieceInfo, TetrisPiece};
+use crate::pieces::{TetrisPieceStruct, TetrisPiece};
 use std::fmt::{Debug, Formatter, Result};
 
 pub type TetrisCell = Option<TetrisPiece>;
@@ -54,7 +54,7 @@ impl TetrisBoard {
         self.data[i as usize].iter().all(|cell| cell.is_some())
     }
 
-    pub fn finalize(&mut self, piece: &PieceInfo, r: isize, c: isize) {
+    pub fn finalize(&mut self, piece: &TetrisPieceStruct, r: isize, c: isize) {
         let w = piece.board.cols;
         let h = piece.board.rows;
 
