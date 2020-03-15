@@ -61,29 +61,30 @@ impl App {
     pub fn start(&mut self) {
         self.fill_buffer();
         self.next_block();
-        //initial setup
-        let rows = [
-            "1101111111",
-            "1101111111",
-            "1000111111",
-            "1001111111",
-            "1101111111",
-            "0001111111",
-            "0011111111",
-        ];
+        
+        // initial setup
+        // let rows = [
+        //     "1101111111",
+        //     "1101111111",
+        //     "1000111111",
+        //     "1001111111",
+        //     "1101111111",
+        //     "0001111111",
+        //     "0011111111",
+        // ];
 
-        let mut ri = R - 1;
-        let mut ci = 0;
-        for r in &rows {
-            for c in r.chars() {
-                if c == '1' {
-                    self.board.set(ri, ci, TetrisPiece::OTHER);
-                }
-                ci += 1;
-            }
-            ri -= 1;
-            ci = 0;
-        }
+        // let mut ri = R - 1;
+        // let mut ci = 0;
+        // for r in &rows {
+        //     for c in r.chars() {
+        //         if c == '1' {
+        //             self.board.set(ri, ci, TetrisPiece::OTHER);
+        //         }
+        //         ci += 1;
+        //     }
+        //     ri -= 1;
+        //     ci = 0;
+        // }
 
         while let Some(e) = self.controller.get_next_event() {
             if let Some(r) = e.render_args() {
