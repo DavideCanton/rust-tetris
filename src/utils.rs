@@ -10,6 +10,7 @@ pub const WIDTH: f64 = 30.0;
 pub const WIN_W: u32 = 800;
 pub const WIN_H: u32 = 600;
 pub const BASE_X: u32 = (WIN_W - (WIDTH as u32 * 10)) / 2;
+pub const HOLD_X: u32 = (BASE_X - (WIDTH as u32 * 3)) / 2;
 
 pub const BLACK: Color = [0.0, 0.0, 0.0, 1.0];
 pub const WHITE: Color = [1.0, 1.0, 1.0, 1.0];

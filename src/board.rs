@@ -54,6 +54,10 @@ impl TetrisBoard {
         self.data[i as usize].iter().all(|cell| cell.is_some())
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.data.iter().all(|row| row.iter().all(|cell| cell.is_none()))
+    }
+
     pub fn finalize(&mut self, piece: &TetrisPieceStruct, r: isize, c: isize) {
         let w = piece.board.cols;
         let h = piece.board.rows;
@@ -67,7 +71,7 @@ impl TetrisBoard {
         }
     }
 
-    pub fn remove_completed_rows(&mut self, last_to_copy: Option<isize>) -> i32 {
+    pub fn completed_rows(&mut self) -> Vec<(isize, isize)> {
         let mut ranges = vec![];
 
         let mut from = None;
@@ -92,11 +96,13 @@ impl TetrisBoard {
             }
         }
 
+        ranges
+    }
+
+    pub fn remove_ranges(&mut self, ranges: Vec<(isize, isize)>, last_to_copy: Option<isize>) {
         for range in &ranges {
             self.remove_rows(range.0, range.1, last_to_copy);
         }
-
-        ranges.iter().map(|r| (r.0 - r.1) as i32).sum()
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &Vec<TetrisCell>> {

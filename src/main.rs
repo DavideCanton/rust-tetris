@@ -15,7 +15,7 @@ use crate::app::App;
 use crate::controller::Controller;
 use crate::utils::{WIN_H, WIN_W};
 use glutin_window::GlutinWindow;
-use opengl_graphics::OpenGL;
+use opengl_graphics::{GlyphCache, OpenGL, TextureSettings};
 use piston::{event_loop::EventLoop, window::WindowSettings};
 use piston_window::{PistonWindow, Window};
 
@@ -34,5 +34,12 @@ fn main() {
 
     configure(&mut window);
 
-    App::new(opengl, Controller::new(window)).start();
+    let assets = find_folder::Search::ParentsThenKids(3, 3)
+        .for_folder("assets")
+        .unwrap();
+    let ref font = assets.join("FiraCode.ttf");
+
+    let glyphs = GlyphCache::new(font, (), TextureSettings::new()).unwrap();
+
+    App::new(opengl, glyphs, Controller::new(window)).start();
 }

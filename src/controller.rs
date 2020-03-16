@@ -11,6 +11,7 @@ pub enum ControllerKey {
     Return,
     Down,
     Up,
+    Hold,
 }
 
 pub struct Controller {
@@ -31,6 +32,7 @@ impl Controller {
             Button::Keyboard(Key::Return) => Some(ControllerKey::Return),
             Button::Keyboard(Key::Down) => Some(ControllerKey::Down),
             Button::Keyboard(Key::Up) => Some(ControllerKey::Up),
+            Button::Keyboard(Key::Space) => Some(ControllerKey::Hold),
             _ => None,
         }
     }

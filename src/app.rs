@@ -3,27 +3,52 @@ use crate::{
     controller::{Controller, ControllerKey},
     drawables::{
         drawable_obj::DrawableObject, drawable_piece::DrawablePiece, rectangle::Rectangle,
+        text::DrawableText,
     },
     drawer::Drawer,
-    pieces::{TetrisPiece, TetrisPieceStruct},
-    utils::{BASE_X, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD, WHITE, WIDTH},
+    pieces::{PieceRotation, TetrisPiece, TetrisPieceStruct},
+    utils::{
+        BASE_X, C, HOLD_X, INITIAL_MOVE_DOWN_THRESHOLD, R, RED, SPED_UP_THRESHOLD, WHITE, WIDTH,
+        WIN_H,
+    },
 };
 use enum_primitive::FromPrimitive;
 use graphics::types::Scalar;
-use opengl_graphics::{GlGraphics, OpenGL};
+use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
 use piston::input::*;
+
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
-use std::{cell::RefCell, collections::VecDeque};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+
+#[derive(PartialEq, Eq, Debug)]
+enum Moves {
+    FALL,
+    ROTATE,
+    SIDE,
+    DOWN,
+    UP,
+}
+
+enum ScoreType {
+    TSpinSingle,
+    TSpinDouble,
+    TSpinTriple,
+    TSpinMini,
+    Tetris,
+    AllClear
+}
 
 const DEBUG: bool = false;
 
-pub struct App {
+pub struct App<'a> {
     gl: RefCell<GlGraphics>,
     board: TetrisBoard,
     r: isize,
     c: isize,
     pause: bool,
     just_placed: bool,
+    already_hold: bool,
+    hold_piece: Option<TetrisPieceStruct>,
     piece: Option<TetrisPieceStruct>,
     rng: ThreadRng,
     time: f64,
@@ -34,10 +59,14 @@ pub struct App {
     old_threshold_sped_up: Option<f64>,
     buffer_next_pieces: VecDeque<TetrisPieceStruct>,
     internal_permutation: VecDeque<TetrisPiece>,
+    last_move: Moves,
+    last_score: Option<ScoreType>,
+    back_to_back: bool,
+    glyphs: Rc<RefCell<GlyphCache<'a>>>,
 }
 
-impl App {
-    pub fn new(opengl: OpenGL, controller: Controller) -> Self {
+impl<'a> App<'a> {
+    pub fn new(opengl: OpenGL, glyphs: GlyphCache<'a>, controller: Controller) -> Self {
         App {
             gl: RefCell::new(GlGraphics::new(opengl)),
             controller,
@@ -46,7 +75,9 @@ impl App {
             c: 0,
             just_placed: false,
             pause: false,
+            already_hold: false,
             piece: None,
+            hold_piece: None,
             rng: thread_rng(),
             time: 0.0,
             removed_rows: 0,
@@ -55,36 +86,23 @@ impl App {
             old_threshold_sped_up: None,
             buffer_next_pieces: VecDeque::with_capacity(5),
             internal_permutation: VecDeque::with_capacity(7),
+            last_move: Moves::FALL,
+            last_score: None,
+            glyphs: Rc::new(RefCell::new(glyphs)),
+            back_to_back: false,
         }
     }
 
     pub fn start(&mut self) {
+        // initial setup
+        let rows = [
+            "1111000011",
+        ];
+        let pieces = [TetrisPiece::I];
+
+        self.initial_setup(&rows, &pieces);
         self.fill_buffer();
         self.next_block();
-        
-        // initial setup
-        // let rows = [
-        //     "1101111111",
-        //     "1101111111",
-        //     "1000111111",
-        //     "1001111111",
-        //     "1101111111",
-        //     "0001111111",
-        //     "0011111111",
-        // ];
-
-        // let mut ri = R - 1;
-        // let mut ci = 0;
-        // for r in &rows {
-        //     for c in r.chars() {
-        //         if c == '1' {
-        //             self.board.set(ri, ci, TetrisPiece::OTHER);
-        //         }
-        //         ci += 1;
-        //     }
-        //     ri -= 1;
-        //     ci = 0;
-        // }
 
         while let Some(e) = self.controller.get_next_event() {
             if let Some(r) = e.render_args() {
@@ -100,6 +118,26 @@ impl App {
                     self.update(&u);
                 }
             }
+        }
+    }
+
+    fn initial_setup(&mut self, rows: &[&str], pieces: &[TetrisPiece]) {
+        let mut ri = R - 1;
+        let mut ci = 0;
+        for r in rows {
+            for c in r.chars() {
+                if c == '1' {
+                    self.board.set(ri, ci, TetrisPiece::OTHER);
+                }
+                ci += 1;
+            }
+            ri -= 1;
+            ci = 0;
+        }
+
+        for p in pieces {
+            self.buffer_next_pieces
+                .push_front(TetrisPieceStruct::new(*p));
         }
     }
 
@@ -168,6 +206,34 @@ impl App {
                 drawer.draw_pause();
             }
 
+            if let Some(last_point) = self.last_score.as_ref() {
+                let pp = [HOLD_X as Scalar, (WIN_H as Scalar) - WIDTH * 3.0];
+
+                let msg = String::from(match last_point {
+                    ScoreType::TSpinSingle => "T-Spin Singolo!",
+                    ScoreType::TSpinDouble => "T-Spin Doppio!",
+                    ScoreType::TSpinTriple => "T-Spin Triplo!",
+                    ScoreType::TSpinMini => "T-Spin Mini!",
+                    ScoreType::Tetris => "Tetris!",
+                    ScoreType::AllClear => "All Clear!"
+                });
+                let dpn = DrawableText::new(pp, &msg, 16, RED, self.glyphs.clone());
+                dpn.draw_object(gl, ctx);
+
+                if self.back_to_back {
+                    let pp = [HOLD_X as Scalar, (WIN_H as Scalar) - WIDTH * 2.0];
+                    let dpn2 = DrawableText::new(pp, "Back to back!", 16, RED, self.glyphs.clone());
+                    dpn2.draw_object(gl, ctx);
+                }
+            }
+
+            if let Some(pieceInfo) = self.hold_piece.as_ref() {
+                let pp = [HOLD_X as Scalar, WIDTH];
+
+                let dpn = DrawablePiece::new(pp, pieceInfo, false);
+                dpn.draw_object(gl, ctx);
+            }
+
             if let Some(pieceInfo) = self.piece.as_ref() {
                 // compute position for shadow
                 let shadow_r = self.get_shadow_row_index(pieceInfo);
@@ -209,7 +275,60 @@ impl App {
         let piece = self.piece.as_ref().unwrap();
         self.board.finalize(piece, self.r as isize, self.c as isize);
         let old_removed_rows = self.removed_rows;
-        self.removed_rows += self.board.remove_completed_rows(Some(20));
+
+        let completed_rows_ranges = self.board.completed_rows();
+        let completed_rows = completed_rows_ranges
+            .iter()
+            .map(|r| (r.0 - r.1) as i32)
+            .sum();
+
+        self.removed_rows += completed_rows;
+        let last = self.last_score.take();
+
+       if completed_rows == 4 {
+            self.last_score = Some(ScoreType::Tetris);
+        } else if piece.piece == TetrisPiece::T {
+            // detect T-spin
+
+            // TODO check for mini T-spin
+            if completed_rows > 0 && self.last_move == Moves::ROTATE {
+                let center_r = self.r + 1;
+                let center_c = self.c + 1;
+                let mut occupied = 0;
+
+                for i in &[-1, 1] {
+                    for j in &[-1, 1] {
+                        let ei = center_r + i;
+                        let ej = center_c + j;
+
+                        if ei < 0 || ei >= R || ej < 0 || ej >= C || self.board.is_set(ei, ej) {
+                            occupied += 1;
+                        }
+                    }
+                }
+
+                if occupied >= 3 {
+                    self.last_score = match completed_rows {
+                        1 => Some(ScoreType::TSpinSingle),
+                        2 => Some(ScoreType::TSpinDouble),
+                        3 => Some(ScoreType::TSpinTriple),
+                        _ => None,
+                    };
+                }
+            }
+        }
+
+        if completed_rows > 0 {
+            self.back_to_back = last.is_some() && self.last_score.is_some();
+        }
+
+        self.board.remove_ranges(completed_rows_ranges, Some(20));
+
+        if self.board.is_empty() {
+            self.back_to_back = false;
+            self.last_score = Some(ScoreType::AllClear);
+        }
+
         if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
             self.current_threshold -= 0.1;
         }
@@ -238,6 +357,7 @@ impl App {
                     next_block = true;
                 } else {
                     self.r += 1;
+                    self.last_move = Moves::FALL;
                     self.last_movement = self.time;
                 }
             }
@@ -262,6 +382,7 @@ impl App {
 
         if self.c + first_col > 0 && !piece.collides_left(self.r, self.c, &self.board) {
             self.c -= 1;
+            self.last_move = Moves::SIDE;
         }
     }
 
@@ -273,6 +394,7 @@ impl App {
             && !piece.collides_right(self.r, self.c, &self.board)
         {
             self.c += 1;
+            self.last_move = Moves::SIDE;
         }
     }
 
@@ -302,6 +424,8 @@ impl App {
             } else {
                 piece.rotate_piece_prev();
             }
+        } else {
+            self.last_move = Moves::ROTATE;
         }
     }
 
@@ -322,6 +446,24 @@ impl App {
 
         self.handle_finalize();
         self.next_block();
+
+        self.last_move = Moves::UP;
+    }
+
+    fn hold_key_pressed(&mut self) {
+        if !self.already_hold {
+            let hold_piece = self.hold_piece.take();
+            let piece = self.piece.take();
+
+            self.hold_piece = piece;
+            self.piece = hold_piece;
+            self.hold_piece.as_mut().unwrap().rotation = PieceRotation::ZERO;
+
+            if let None = self.piece {
+                self.next_block();
+            }
+            self.already_hold = true;
+        }
     }
 
     fn down_key_pressed(&mut self) {
@@ -329,12 +471,13 @@ impl App {
             None => {
                 self.old_threshold_sped_up = Some(self.current_threshold);
                 self.current_threshold = SPED_UP_THRESHOLD;
+                self.last_move = Moves::DOWN;
             }
             Some(_) => {}
         }
     }
 
-    fn exec_if_not_paused<F: Fn(&mut App)>(&mut self, ex: F) {
+    fn exec_if_not_paused<F: Fn(&mut App<'a>)>(&mut self, ex: F) {
         if !self.pause {
             ex(self);
         }
@@ -349,6 +492,7 @@ impl App {
             Some(ControllerKey::PrevRotation) => self.exec_if_not_paused(App::prev_rot_pressed),
             Some(ControllerKey::Down) => self.exec_if_not_paused(App::down_key_pressed),
             Some(ControllerKey::Up) => self.exec_if_not_paused(App::up_key_pressed),
+            Some(ControllerKey::Hold) => self.exec_if_not_paused(App::hold_key_pressed),
             _ => {}
         }
     }
@@ -384,5 +528,6 @@ impl App {
         self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
         self.old_threshold_sped_up = None;
         self.just_placed = true;
+        self.already_hold = false;
     }
 }
