@@ -201,7 +201,8 @@ mod tests {
         println!("{:?}", board);
         println!("-----------");
 
-        board.remove_completed_rows(Some(5));
+        let ranges = board.completed_rows();
+        board.remove_ranges(ranges, Some(5));
 
         println!("{:?}", board);
         println!("-----------");
@@ -226,7 +227,8 @@ mod tests {
         println!("{:?}", board);
         println!("-----------");
 
-        board.remove_completed_rows(Some(5));
+        let ranges = board.completed_rows();
+        board.remove_ranges(ranges, Some(5));
 
         println!("{:?}", board);
         println!("-----------");
