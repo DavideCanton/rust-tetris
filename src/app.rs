@@ -7,10 +7,7 @@ use crate::{
     },
     drawer::Drawer,
     pieces::{PieceRotation, TetrisPiece, TetrisPieceStruct},
-    utils::{
-        BASE_X, C, HOLD_X, INITIAL_MOVE_DOWN_THRESHOLD, R, RED, SPED_UP_THRESHOLD, WHITE, WIDTH,
-        WIN_H,
-    },
+    utils::*
 };
 use enum_primitive::FromPrimitive;
 use graphics::types::Scalar;
