@@ -33,8 +33,8 @@ pub const L_COLOR: Color = ORANGE;
 pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
-pub fn piece_to_color(p: &TetrisPiece, is_shadow: bool) -> Color {
-    let original_color = match *p {
+pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> Color {
+    let original_color = match p {
         TetrisPiece::O => O_COLOR,
         TetrisPiece::I => I_COLOR,
         TetrisPiece::S => S_COLOR,

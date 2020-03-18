@@ -37,7 +37,7 @@ impl DrawableObject for DrawablePiece<'_> {
                     let j = j as Scalar;
 
                     let pos = [j * WIDTH, i * WIDTH];
-                    let color = piece_to_color(p, self.is_shadow);
+                    let color = piece_to_color(*p, self.is_shadow);
 
                     Square::new(pos, WIDTH, color).draw_object(gl, ctx);
                 }

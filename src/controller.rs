@@ -23,8 +23,8 @@ impl Controller {
         Controller { window }
     }
 
-    pub fn get_key(&self, args: &Button) -> Option<ControllerKey> {
-        match *args {
+    pub fn get_key(&self, args: Button) -> Option<ControllerKey> {
+        match args {
             Button::Keyboard(Key::Left) => Some(ControllerKey::Left),
             Button::Keyboard(Key::Right) => Some(ControllerKey::Right),
             Button::Keyboard(Key::X) => Some(ControllerKey::NextRotation),

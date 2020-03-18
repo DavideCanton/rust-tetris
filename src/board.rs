@@ -166,7 +166,7 @@ impl Debug for TetrisBoard {
                 write!(formatter, "{}", c)?
             }
 
-            write!(formatter, "{}", "\n")?
+            writeln!(formatter)?
         }
 
         Ok(())
@@ -181,14 +181,13 @@ mod tests {
     fn load_board(board: &mut TetrisBoard, s: &str) {
         let c = board.cols;
 
-        let mut i = 0;
-        for ch in s.chars() {
+        for (i, ch) in s.chars().enumerate() {
+            let i = i as isize;
             match ch {
                 ' ' => board.clear(i / c, i % c),
                 '*' => board.set(i / c, i % c, TetrisPiece::O),
                 _ => panic!(),
             }
-            i += 1;
         }
     }
 

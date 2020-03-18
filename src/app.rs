@@ -35,7 +35,7 @@ enum ScoreType {
     TSpinTriple,
     TSpinMini,
     Tetris,
-    AllClear
+    AllClear,
 }
 
 const DEBUG: bool = false;
@@ -95,9 +95,7 @@ impl<'a> App<'a> {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = [
-            "1111000011",
-        ];
+        let rows = ["1111000011"];
         let pieces = [TetrisPiece::I];
 
         self.initial_setup(&rows, &pieces);
@@ -106,16 +104,16 @@ impl<'a> App<'a> {
 
         while let Some(e) = self.controller.get_next_event() {
             if let Some(r) = e.render_args() {
-                self.render(&r);
+                self.render(r);
             }
 
             if let Some(p) = e.press_args() {
-                self.process_keys(&p);
+                self.process_keys(p);
             }
 
             if let Some(u) = e.update_args() {
                 if !self.pause {
-                    self.update(&u);
+                    self.update(u);
                 }
             }
         }
@@ -188,7 +186,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn render(&mut self, args: &RenderArgs) {
+    pub fn render(&mut self, args: RenderArgs) {
         self.gl.borrow_mut().draw(args.viewport(), |ctx, gl| {
             let mut drawer = Drawer::new(gl, ctx);
 
@@ -215,7 +213,7 @@ impl<'a> App<'a> {
                     ScoreType::TSpinTriple => "T-Spin Triplo!",
                     ScoreType::TSpinMini => "T-Spin Mini!",
                     ScoreType::Tetris => "Tetris!",
-                    ScoreType::AllClear => "All Clear!"
+                    ScoreType::AllClear => "All Clear!",
                 });
                 let dpn = DrawableText::new(pp, &msg, 16, RED, self.glyphs.clone());
                 dpn.draw_object(gl, ctx);
@@ -285,7 +283,7 @@ impl<'a> App<'a> {
         self.removed_rows += completed_rows;
         let last = self.last_score.take();
 
-       if completed_rows == 4 {
+        if completed_rows == 4 {
             self.last_score = Some(ScoreType::Tetris);
         } else if piece.piece == TetrisPiece::T {
             // detect T-spin
@@ -334,7 +332,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn update(&mut self, args: &UpdateArgs) {
+    pub fn update(&mut self, args: UpdateArgs) {
         self.time += args.dt;
 
         if self.just_placed {
@@ -459,7 +457,7 @@ impl<'a> App<'a> {
             self.piece = hold_piece;
             self.hold_piece.as_mut().unwrap().rotation = PieceRotation::ZERO;
 
-            if let None = self.piece {
+            if self.piece.is_none() {
                 self.next_block();
             }
             self.already_hold = true;
@@ -483,7 +481,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn process_keys(&mut self, args: &Button) {
+    pub fn process_keys(&mut self, args: Button) {
         match self.controller.get_key(args) {
             Some(ControllerKey::Return) => self.enter_key_pressed(),
             Some(ControllerKey::Left) => self.exec_if_not_paused(App::left_key_pressed),

@@ -31,7 +31,7 @@ impl<'a> Drawer<'a> {
         let j = j as Scalar;
 
         let pos = [BASE_X as Scalar + j * WIDTH + base_x, i * WIDTH + base_y];
-        let sq = Square::new(pos, WIDTH, piece_to_color(&piece, false));
+        let sq = Square::new(pos, WIDTH, piece_to_color(piece, false));
         sq.draw_object(self.gl, self.ctx);
     }
 
@@ -40,7 +40,7 @@ impl<'a> Drawer<'a> {
         let j = j as Scalar;
 
         let pos = [BASE_X as Scalar + j * WIDTH, i * WIDTH];
-        let color = piece_to_color(&piece, is_shadow);
+        let color = piece_to_color(piece, is_shadow);
         let sq = Square::new(pos, WIDTH, color);
         sq.draw_object(self.gl, self.ctx);
     }

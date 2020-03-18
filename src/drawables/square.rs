@@ -20,7 +20,7 @@ impl Square {
 
 impl DrawableObject for Square {
     fn position(&self) -> Vec2d {
-        return self.pos;
+        self.pos
     }
 
     fn draw_object_after_traslate(&self, gl: &mut GlGraphics, ctx: Context) {

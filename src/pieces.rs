@@ -81,34 +81,34 @@ impl TetrisPieceStruct {
     }
 
     pub fn width(&self) -> isize {
-        return self.board.cols;
+        self.board.cols
     }
 
     pub fn height(&self) -> isize {
-        return self.board.rows;
+        self.board.rows
     }
 
-    pub fn collides_left(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
-        let w = self.width();
-        let h = self.height();
+    pub fn collides_left(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
+        let width = self.width();
+        let height = self.height();
 
-        for i in 0..h {
-            for j in 0..w {
+        for i in 0..height {
+            for j in 0..width {
                 let i = i as isize;
                 let j = j as isize;
 
                 let p_cell = self.board.is_set(i, j);
-                let m_cell = matrix.is_set(r + i, j + c);
+                let m_cell = matrix.is_set(row + i, j + col);
 
                 if p_cell && m_cell {
                     panic!("Piece overlapping matrix!");
                 }
 
-                if j + c == 0 {
+                if j + col == 0 {
                     return false;
                 }
 
-                let mn_cell = matrix.is_set(r + i, j + c - 1);
+                let mn_cell = matrix.is_set(row + i, j + col - 1);
 
                 if p_cell && mn_cell {
                     return true;
@@ -119,27 +119,27 @@ impl TetrisPieceStruct {
         false
     }
 
-    pub fn collides_right(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
-        let w = self.board.cols;
-        let h = self.board.rows;
+    pub fn collides_right(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
+        let width = self.board.cols;
+        let height = self.board.rows;
 
-        for i in 0..h {
-            for j in 0..w {
+        for i in 0..height {
+            for j in 0..width {
                 let i = i as isize;
                 let j = j as isize;
 
                 let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(r + i, j + c);
+                let mcell = matrix.is_set(row + i, j + col);
 
                 if pcell && mcell {
                     panic!("Piece overlapping matrix!");
                 }
 
-                if j + c == self.board.cols - 1 {
+                if j + col == self.board.cols - 1 {
                     return false;
                 }
 
-                let mncell = matrix.is_set(r + i, j + c + 1);
+                let mncell = matrix.is_set(row + i, j + col + 1);
 
                 if pcell && mncell {
                     return true;
@@ -152,16 +152,16 @@ impl TetrisPieceStruct {
 
     pub fn collides(
         &self,
-        r: isize,
-        c: isize,
+        row: isize,
+        col: isize,
         matrix: &TetrisBoard,
         kick: &(isize, isize),
     ) -> bool {
-        let w = self.board.cols;
-        let h = self.board.rows;
+        let width = self.board.cols;
+        let height = self.board.rows;
 
-        for i in 0..h {
-            for j in 0..w {
+        for i in 0..height {
+            for j in 0..width {
                 let i = i as isize;
                 let j = j as isize;
 
@@ -171,8 +171,8 @@ impl TetrisPieceStruct {
                     continue;
                 }
 
-                let ei = r + i - kick.1;
-                let ej = j + c + kick.0;
+                let ei = row + i - kick.1;
+                let ej = j + col + kick.0;
                 
                 if ei < 0 || ei >= matrix.rows || ej < 0 || ej >= matrix.cols {
                     return true;
@@ -188,27 +188,27 @@ impl TetrisPieceStruct {
         false
     }
 
-    pub fn collides_on_next(&self, r: isize, c: isize, matrix: &TetrisBoard) -> bool {
-        let w = self.board.cols;
-        let h = self.board.rows;
+    pub fn collides_on_next(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
+        let width = self.board.cols;
+        let height = self.board.rows;
 
-        for i in 0..h {
-            for j in 0..w {
+        for i in 0..height {
+            for j in 0..width {
                 let i = i as isize;
                 let j = j as isize;
 
                 let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(r + i, j + c);
+                let mcell = matrix.is_set(row + i, j + col);
 
                 if pcell && mcell {
                     // panic!("Piece overlapping matrix!");
                 }
 
-                if pcell && r + i == matrix.rows as isize - 1 {
+                if pcell && row + i == matrix.rows as isize - 1 {
                     return true;
                 }
 
-                let mncell = matrix.is_set(r + i + 1, j + c);
+                let mncell = matrix.is_set(row + i + 1, j + col);
 
                 if pcell && mncell {
                     return true;

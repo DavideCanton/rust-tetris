@@ -12,7 +12,7 @@ pub struct PauseOverlay;
 
 impl DrawableObject for PauseOverlay {
     fn position(&self) -> Vec2d {
-        return [0.0, 0.0];
+        [0.0, 0.0]
     }
 
     fn draw_object_after_traslate(&self, gl: &mut GlGraphics, ctx: Context) {

@@ -26,7 +26,7 @@ impl Rectangle {
 
 impl DrawableObject for Rectangle {
     fn position(&self) -> Vec2d {
-        return self.pos;
+        self.pos
     }
 
     fn draw_object_after_traslate(&self, gl: &mut GlGraphics, ctx: Context) {

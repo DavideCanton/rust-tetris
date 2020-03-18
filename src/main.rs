@@ -30,14 +30,14 @@ fn main() {
         .graphics_api(opengl)
         .exit_on_esc(true)
         .build()
-        .expect(&format!("Failed to init OpenGL {:?}", opengl));
+        .unwrap_or_else(|_| panic!("Failed to init OpenGL {:?}", opengl));
 
     configure(&mut window);
 
     let assets = find_folder::Search::ParentsThenKids(3, 3)
         .for_folder("assets")
         .unwrap();
-    let ref font = assets.join("FiraCode.ttf");
+    let font = &assets.join("FiraCode.ttf");
 
     let glyphs = GlyphCache::new(font, (), TextureSettings::new()).unwrap();
 

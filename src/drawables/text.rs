@@ -35,7 +35,7 @@ impl<'a> DrawableText<'a> {
 
 impl<'a> DrawableObject for DrawableText<'a> {
     fn position(&self) -> Vec2d {
-        return self.pos;
+        self.pos
     }
 
     fn draw_object_after_traslate(&self, gl: &mut GlGraphics, ctx: Context) {
