@@ -95,8 +95,8 @@ impl<'a> App<'a> {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = ["1111000011"];
-        let pieces = [TetrisPiece::I];
+        let rows = [];
+        let pieces = [];
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
