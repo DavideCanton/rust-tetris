@@ -1,29 +1,23 @@
 use crate::board::TetrisBoard;
-use enum_primitive::*;
-use num::FromPrimitive;
 
-enum_from_primitive! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum TetrisPiece {
-        T,
-        L,
-        J,
-        O,
-        I,
-        S,
-        Z,
-        OTHER
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TetrisPiece {
+    T,
+    L,
+    J,
+    O,
+    I,
+    S,
+    Z,
+    OTHER,
 }
 
-enum_from_primitive! {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub enum PieceRotation {
-        ZERO,
-        RIGHT,
-        TWO,
-        LEFT
-    }
+pub enum PieceRotation {
+    ZERO,
+    RIGHT,
+    TWO,
+    LEFT,
 }
 
 static I_KICKS: [[(isize, isize); 5]; 8] = [
@@ -173,7 +167,7 @@ impl TetrisPieceStruct {
 
                 let ei = row + i - kick.1;
                 let ej = j + col + kick.0;
-                
+
                 if ei < 0 || ei >= matrix.rows || ej < 0 || ej >= matrix.cols {
                     return true;
                 }
@@ -230,15 +224,22 @@ impl TetrisPieceStruct {
     }
 
     fn next_rotation(rotation: PieceRotation) -> PieceRotation {
-        let mut i = rotation as u8;
-        i = (i + 1) % 4;
-        PieceRotation::from_u8(i).unwrap()
+        match rotation {
+            PieceRotation::ZERO => PieceRotation::RIGHT,
+            PieceRotation::RIGHT => PieceRotation::TWO,
+            PieceRotation::TWO => PieceRotation::LEFT,
+            PieceRotation::LEFT => PieceRotation::ZERO,
+        }
     }
 
     fn prev_rotation(rotation: PieceRotation) -> PieceRotation {
-        let mut i = rotation as u8;
-        i = (i + 3) % 4;
-        PieceRotation::from_u8(i).unwrap()
+        TetrisPieceStruct::next_rotation(
+            TetrisPieceStruct::next_rotation(
+                TetrisPieceStruct::next_rotation(
+                    rotation
+                )
+            )
+        )
     }
 
     pub fn get_piece_size(piece: TetrisPiece) -> (isize, isize) {

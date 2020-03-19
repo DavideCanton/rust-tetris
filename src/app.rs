@@ -9,7 +9,6 @@ use crate::{
     pieces::{PieceRotation, TetrisPiece, TetrisPieceStruct},
     utils::*
 };
-use enum_primitive::FromPrimitive;
 use graphics::types::Scalar;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
 use piston::input::*;
@@ -503,7 +502,15 @@ impl<'a> App<'a> {
     }
 
     fn fill_permutation(&mut self) {
-        let mut nums: Vec<_> = (0..7).map(|n| TetrisPiece::from_u8(n).unwrap()).collect();
+        let mut nums: Vec<_> = vec![
+            TetrisPiece::I,
+            TetrisPiece::S,
+            TetrisPiece::Z,
+            TetrisPiece::O,
+            TetrisPiece::T,
+            TetrisPiece::L,
+            TetrisPiece::J,
+        ];
         nums.as_mut_slice().shuffle(&mut self.rng);
         self.internal_permutation.extend(nums.into_iter());
     }
