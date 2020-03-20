@@ -4,9 +4,9 @@
 
 #[macro_use]
 mod app;
+mod app_structs;
 mod board;
 mod controller;
-mod drawables;
 mod drawer;
 mod pieces;
 mod utils;

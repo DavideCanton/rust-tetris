@@ -1,4 +1,4 @@
-use crate::pieces::TetrisPiece;
+use crate::pieces::TetrisPieceType;
 use graphics::types::Color;
 
 pub const R: isize = 20;
@@ -33,16 +33,16 @@ pub const L_COLOR: Color = ORANGE;
 pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
-pub fn piece_to_color(p: TetrisPiece, is_shadow: bool) -> Color {
+pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
     let original_color = match p {
-        TetrisPiece::O => O_COLOR,
-        TetrisPiece::I => I_COLOR,
-        TetrisPiece::S => S_COLOR,
-        TetrisPiece::Z => Z_COLOR,
-        TetrisPiece::T => T_COLOR,
-        TetrisPiece::L => L_COLOR,
-        TetrisPiece::J => J_COLOR,
-        TetrisPiece::OTHER => OTHER_COLOR
+        TetrisPieceType::O => O_COLOR,
+        TetrisPieceType::I => I_COLOR,
+        TetrisPieceType::S => S_COLOR,
+        TetrisPieceType::Z => Z_COLOR,
+        TetrisPieceType::T => T_COLOR,
+        TetrisPieceType::L => L_COLOR,
+        TetrisPieceType::J => J_COLOR,
+        TetrisPieceType::OTHER => OTHER_COLOR,
     };
 
     let mut color = [0.0; 4];

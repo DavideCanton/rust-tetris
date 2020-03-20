@@ -1,7 +1,9 @@
-use crate::pieces::{TetrisPieceStruct, TetrisPiece};
+use crate::{
+    pieces::TetrisPieceType
+};
 use std::fmt::{Debug, Formatter, Result};
 
-pub type TetrisCell = Option<TetrisPiece>;
+pub type TetrisCell = Option<TetrisPieceType>;
 
 pub struct TetrisBoard {
     pub rows: isize,
@@ -38,7 +40,7 @@ impl TetrisBoard {
         }
     }
 
-    pub fn set(&mut self, i: isize, j: isize, p: TetrisPiece) {
+    pub fn set(&mut self, i: isize, j: isize, p: TetrisPieceType) {
         self.set_val(i, j, Some(p));
     }
 
@@ -55,20 +57,9 @@ impl TetrisBoard {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.data.iter().all(|row| row.iter().all(|cell| cell.is_none()))
-    }
-
-    pub fn finalize(&mut self, piece: &TetrisPieceStruct, r: isize, c: isize) {
-        let w = piece.board.cols;
-        let h = piece.board.rows;
-
-        for i in 0..h {
-            for j in 0..w {
-                if piece.board.is_set(i, j) {
-                    self.set(i + r, j + c, piece.piece);
-                }
-            }
-        }
+        self.data
+            .iter()
+            .all(|row| row.iter().all(|cell| cell.is_none()))
     }
 
     pub fn completed_rows(&mut self) -> Vec<(isize, isize)> {
@@ -176,7 +167,7 @@ impl Debug for TetrisBoard {
 #[cfg(test)]
 mod tests {
     use super::TetrisBoard;
-    use crate::pieces::TetrisPiece;
+    use crate::pieces::TetrisPieceType;
 
     fn load_board(board: &mut TetrisBoard, s: &str) {
         let c = board.cols;
@@ -185,7 +176,7 @@ mod tests {
             let i = i as isize;
             match ch {
                 ' ' => board.clear(i / c, i % c),
-                '*' => board.set(i / c, i % c, TetrisPiece::O),
+                '*' => board.set(i / c, i % c, TetrisPieceType::O),
                 _ => panic!(),
             }
         }
