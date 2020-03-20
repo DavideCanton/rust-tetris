@@ -1,15 +1,11 @@
 use crate::{
+    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     board::TetrisBoard,
     controller::{Controller, ControllerKey},
-    drawables::{
-        drawable_obj::DrawableObject, drawable_piece::DrawablePiece, rectangle::Rectangle,
-        text::DrawableText,
-    },
     drawer::Drawer,
-    pieces::{PieceRotation, TetrisPiece, TetrisPieceStruct},
-    utils::*
+    pieces::{TetrisPiece, TetrisPieceType},
+    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
 };
-use graphics::types::Scalar;
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
 use piston::input::*;
 
@@ -34,18 +30,13 @@ enum ScoreType {
     AllClear,
 }
 
-const DEBUG: bool = false;
-
 pub struct App<'a> {
     gl: RefCell<GlGraphics>,
     board: TetrisBoard,
-    r: isize,
-    c: isize,
+    piece: Option<TetrisPieceWithPosition>,
     pause: bool,
     just_placed: bool,
-    already_hold: bool,
-    hold_piece: Option<TetrisPieceStruct>,
-    piece: Option<TetrisPieceStruct>,
+    hold_piece: Option<HoldTetrisPiece>,
     rng: ThreadRng,
     time: f64,
     controller: Controller,
@@ -53,8 +44,8 @@ pub struct App<'a> {
     removed_rows: i32,
     current_threshold: f64,
     old_threshold_sped_up: Option<f64>,
-    buffer_next_pieces: VecDeque<TetrisPieceStruct>,
-    internal_permutation: VecDeque<TetrisPiece>,
+    buffer_next_pieces: VecDeque<TetrisPiece>,
+    internal_permutation: VecDeque<TetrisPieceType>,
     last_move: Moves,
     last_score: Option<ScoreType>,
     back_to_back: bool,
@@ -67,11 +58,8 @@ impl<'a> App<'a> {
             gl: RefCell::new(GlGraphics::new(opengl)),
             controller,
             board: TetrisBoard::new(R, C),
-            r: 0,
-            c: 0,
             just_placed: false,
             pause: false,
-            already_hold: false,
             piece: None,
             hold_piece: None,
             rng: thread_rng(),
@@ -115,13 +103,13 @@ impl<'a> App<'a> {
         }
     }
 
-    fn initial_setup(&mut self, rows: &[&str], pieces: &[TetrisPiece]) {
+    fn initial_setup(&mut self, rows: &[&str], pieces: &[TetrisPieceType]) {
         let mut ri = R - 1;
         let mut ci = 0;
         for r in rows {
             for c in r.chars() {
                 if c == '1' {
-                    self.board.set(ri, ci, TetrisPiece::OTHER);
+                    self.board.set(ri, ci, TetrisPieceType::OTHER);
                 }
                 ci += 1;
             }
@@ -130,32 +118,17 @@ impl<'a> App<'a> {
         }
 
         for p in pieces {
-            self.buffer_next_pieces
-                .push_front(TetrisPieceStruct::new(*p));
+            self.buffer_next_pieces.push_front(TetrisPiece::new(*p));
         }
     }
 
-    fn render_next_block(&self, drawer: &mut Drawer) {
-        let mut i = 0.0;
-        let mut s = 0.0;
-
-        for np in self.buffer_next_pieces.iter().rev().take(3) {
-            let offset = if i == 0.0 { 0.0 } else { 50.0 };
-            let pos = [BASE_X as Scalar + 355.0 + offset, s];
-            s += np.height() as Scalar * WIDTH + 5.0;
-            let dp = DrawablePiece::new(pos, np, false);
-            drawer.draw_next_block(&dp);
-            i += 1.0;
-        }
-    }
-
-    fn get_shadow_row_index(&self, pieceInfo: &TetrisPieceStruct) -> Option<isize> {
+    fn get_shadow_row_index(&self, pieceInfo: &TetrisPieceWithPosition) -> Option<isize> {
         if self.pause {
             None
         } else {
-            let mut shadow_r = self.r;
+            let mut shadow_r = pieceInfo.row();
 
-            while !pieceInfo.collides_on_next(shadow_r, self.c, &self.board) {
+            while !pieceInfo.collides_on_next_with_row(shadow_r, &self.board) {
                 shadow_r += 1;
             }
 
@@ -163,37 +136,19 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn draw_board(
-        &self,
-        drawer: &mut Drawer,
-        base_x: Scalar,
-        base_y: Scalar,
-        piece_board: &TetrisBoard,
-    ) {
-        for i in 0..piece_board.rows {
-            for j in 0..piece_board.cols {
-                if let Some(p) = piece_board.get(i, j) {
-                    let i = i as isize;
-                    let j = j as isize;
-
-                    drawer.draw_square(i as isize, j as isize, p, base_x, base_y);
-                }
-            }
-        }
-    }
-
     pub fn render(&mut self, args: RenderArgs) {
         self.gl.borrow_mut().draw(args.viewport(), |ctx, gl| {
-            let mut drawer = Drawer::new(gl, ctx);
+            let mut drawer = Drawer::new(gl, ctx, self.glyphs.clone());
 
             drawer.clear();
             drawer.draw_border();
 
-            // draw next block
-            self.render_next_block(&mut drawer);
+            for (index, np) in self.buffer_next_pieces.iter().rev().take(5).enumerate() {
+                drawer.draw_queue_piece(index, np);
+            }
 
             let board = &self.board;
-            self.draw_board(&mut drawer, 0.0, 0.0, board);
+            drawer.draw_board(0.0, 0.0, board);
 
             if self.pause {
                 // draw pause
@@ -201,8 +156,6 @@ impl<'a> App<'a> {
             }
 
             if let Some(last_point) = self.last_score.as_ref() {
-                let pp = [HOLD_X as Scalar, (WIN_H as Scalar) - WIDTH * 3.0];
-
                 let msg = String::from(match last_point {
                     ScoreType::TSpinSingle => "T-Spin Singolo!",
                     ScoreType::TSpinDouble => "T-Spin Doppio!",
@@ -211,63 +164,33 @@ impl<'a> App<'a> {
                     ScoreType::Tetris => "Tetris!",
                     ScoreType::AllClear => "All Clear!",
                 });
-                let dpn = DrawableText::new(pp, &msg, 16, RED, self.glyphs.clone());
-                dpn.draw_object(gl, ctx);
+
+                drawer.draw_score_text(&msg);
 
                 if self.back_to_back {
-                    let pp = [HOLD_X as Scalar, (WIN_H as Scalar) - WIDTH * 2.0];
-                    let dpn2 = DrawableText::new(pp, "Back to back!", 16, RED, self.glyphs.clone());
-                    dpn2.draw_object(gl, ctx);
+                    drawer.draw_b2b_text();
                 }
             }
 
             if let Some(pieceInfo) = self.hold_piece.as_ref() {
-                let pp = [HOLD_X as Scalar, WIDTH];
-
-                let dpn = DrawablePiece::new(pp, pieceInfo, false);
-                dpn.draw_object(gl, ctx);
+                drawer.draw_hold_piece(pieceInfo);
             }
 
             if let Some(pieceInfo) = self.piece.as_ref() {
                 // compute position for shadow
-                let shadow_r = self.get_shadow_row_index(pieceInfo);
+                drawer.draw_piece_on_board(pieceInfo);
 
-                let pp = [
-                    BASE_X as Scalar + self.c as Scalar * WIDTH,
-                    self.r as Scalar * WIDTH,
-                ];
-
-                if DEBUG {
-                    let size = TetrisPieceStruct::get_piece_size(pieceInfo.piece);
-                    let r = Rectangle::new(
-                        pp,
-                        size.1 as Scalar * WIDTH,
-                        size.0 as Scalar * WIDTH,
-                        WHITE,
-                    );
-                    r.draw_object(gl, ctx);
-                }
-
-                let dpn = DrawablePiece::new(pp, pieceInfo, false);
-                dpn.draw_object(gl, ctx);
-
+                let shadow_r = self.get_shadow_row_index(&pieceInfo);
                 if let Some(shadow_r) = shadow_r {
-                    if self.r + pieceInfo.height() <= shadow_r {
-                        let ps = [
-                            BASE_X as Scalar + self.c as Scalar * WIDTH,
-                            shadow_r as Scalar * WIDTH,
-                        ];
-                        let dps = DrawablePiece::new(ps, pieceInfo, true);
-                        dps.draw_object(gl, ctx);
-                    }
+                    drawer.try_draw_shadow(shadow_r, pieceInfo);
                 }
             }
         });
     }
 
     fn handle_finalize(&mut self) {
-        let piece = self.piece.as_ref().unwrap();
-        self.board.finalize(piece, self.r as isize, self.c as isize);
+        let piece_with_position = self.piece.as_ref().unwrap();
+        piece_with_position.finalize_on(&mut self.board);
         let old_removed_rows = self.removed_rows;
 
         let completed_rows_ranges = self.board.completed_rows();
@@ -281,13 +204,13 @@ impl<'a> App<'a> {
 
         if completed_rows == 4 {
             self.last_score = Some(ScoreType::Tetris);
-        } else if piece.piece == TetrisPiece::T {
+        } else if piece_with_position.pieceType() == TetrisPieceType::T {
             // detect T-spin
 
             // TODO check for mini T-spin
             if completed_rows > 0 && self.last_move == Moves::ROTATE {
-                let center_r = self.r + 1;
-                let center_c = self.c + 1;
+                let center_r = piece_with_position.row() + 1;
+                let center_c = piece_with_position.col() + 1;
                 let mut occupied = 0;
 
                 for i in &[-1, 1] {
@@ -313,6 +236,7 @@ impl<'a> App<'a> {
         }
 
         if completed_rows > 0 {
+            // TODO check this
             self.back_to_back = last.is_some() && self.last_score.is_some();
         }
 
@@ -334,7 +258,7 @@ impl<'a> App<'a> {
         if self.just_placed {
             let piece = self.piece.as_ref().unwrap();
 
-            if piece.collides_on_next(self.r, self.c, &self.board) {
+            if piece.collides_on_next(&self.board) {
                 println!("Game over!");
                 self.controller.close_window();
             }
@@ -345,12 +269,12 @@ impl<'a> App<'a> {
             self.just_placed = false;
 
             {
-                let piece: &TetrisPieceStruct = self.piece.as_ref().unwrap();
+                let piece = self.piece.as_mut().unwrap();
 
-                if piece.collides_on_next(self.r, self.c, &self.board) {
+                if piece.collides_on_next(&self.board) {
                     next_block = true;
                 } else {
-                    self.r += 1;
+                    piece.move_down();
                     self.last_move = Moves::FALL;
                     self.last_movement = self.time;
                 }
@@ -371,52 +295,41 @@ impl<'a> App<'a> {
     }
 
     fn left_key_pressed(&mut self) {
-        let piece = self.piece.as_ref().unwrap();
-        let first_col = piece.board.get_first_set_col().unwrap() as isize;
-
-        if self.c + first_col > 0 && !piece.collides_left(self.r, self.c, &self.board) {
-            self.c -= 1;
+        let piece = self.piece.as_mut().unwrap();
+        if piece.try_move_left(&self.board) {
             self.last_move = Moves::SIDE;
         }
     }
 
     fn right_key_pressed(&mut self) {
-        let piece = self.piece.as_ref().unwrap();
-        let last_col = piece.board.get_last_set_col().unwrap() as isize;
-
-        if self.c + last_col < (self.board.cols as isize) - 1
-            && !piece.collides_right(self.r, self.c, &self.board)
-        {
-            self.c += 1;
+        let piece = self.piece.as_mut().unwrap();
+        if piece.try_move_right(&self.board) {
             self.last_move = Moves::SIDE;
         }
     }
 
     fn rot_pressed(&mut self, next: bool) {
-        let piece = self.piece.as_mut().unwrap();
-        let prev_rot = piece.rotation;
+        let piece_with_pos = self.piece.as_mut().unwrap();
+        let prev_rot = piece_with_pos.rotation();
 
         if next {
-            piece.rotate_piece();
+            piece_with_pos.rotate_piece();
         } else {
-            piece.rotate_piece_prev();
+            piece_with_pos.rotate_piece_prev();
         }
 
         let mut ok = false;
-        for kick in piece.get_kicks(prev_rot) {
-            if !piece.collides(self.r, self.c, &self.board, kick) {
-                ok = true;
-                self.r -= kick.1;
-                self.c += kick.0;
-                break;
-            }
+
+        if let Some(kick) = piece_with_pos.can_rotate(prev_rot, &self.board) {
+            piece_with_pos.kick_by(kick);
+            ok = true;
         }
 
         if !ok {
             if !next {
-                piece.rotate_piece();
+                piece_with_pos.rotate_piece();
             } else {
-                piece.rotate_piece_prev();
+                piece_with_pos.rotate_piece_prev();
             }
         } else {
             self.last_move = Moves::ROTATE;
@@ -432,10 +345,10 @@ impl<'a> App<'a> {
     }
 
     fn up_key_pressed(&mut self) {
-        let piece = self.piece.as_ref().unwrap();
+        let piece = self.piece.as_mut().unwrap();
 
-        while !piece.collides_on_next(self.r, self.c, &self.board) {
-            self.r += 1;
+        while !piece.collides_on_next(&self.board) {
+            piece.move_down();
         }
 
         self.handle_finalize();
@@ -445,18 +358,20 @@ impl<'a> App<'a> {
     }
 
     fn hold_key_pressed(&mut self) {
-        if !self.already_hold {
-            let hold_piece = self.hold_piece.take();
-            let piece = self.piece.take();
+        if HoldTetrisPiece::can_swap(&self.hold_piece) {
+            let p = self.piece.take();
+            let hp = self.hold_piece.take();
 
-            self.hold_piece = piece;
-            self.piece = hold_piece;
-            self.hold_piece.as_mut().unwrap().rotation = PieceRotation::ZERO;
+            self.hold_piece = Some(HoldTetrisPiece::new(p.unwrap().tetris_piece()));
+            if let Some(hp) = hp{
+                self.piece = Some(App::build_piece_with_pos(hp.piece));
+            }
 
             if self.piece.is_none() {
                 self.next_block();
             }
-            self.already_hold = true;
+
+            self.hold_piece.as_mut().unwrap().set_hold();
         }
     }
 
@@ -497,19 +412,18 @@ impl<'a> App<'a> {
         }
 
         let piece = self.internal_permutation.pop_front().unwrap();
-        self.buffer_next_pieces
-            .push_front(TetrisPieceStruct::new(piece));
+        self.buffer_next_pieces.push_front(TetrisPiece::new(piece));
     }
 
     fn fill_permutation(&mut self) {
         let mut nums: Vec<_> = vec![
-            TetrisPiece::I,
-            TetrisPiece::S,
-            TetrisPiece::Z,
-            TetrisPiece::O,
-            TetrisPiece::T,
-            TetrisPiece::L,
-            TetrisPiece::J,
+            TetrisPieceType::I,
+            TetrisPieceType::S,
+            TetrisPieceType::Z,
+            TetrisPieceType::O,
+            TetrisPieceType::T,
+            TetrisPieceType::L,
+            TetrisPieceType::J,
         ];
         nums.as_mut_slice().shuffle(&mut self.rng);
         self.internal_permutation.extend(nums.into_iter());
@@ -521,15 +435,19 @@ impl<'a> App<'a> {
         }
     }
 
+    fn build_piece_with_pos(piece: TetrisPiece)->TetrisPieceWithPosition {
+        TetrisPieceWithPosition::new(0, C/2-1,piece)
+    }
+
     fn next_block(&mut self) {
         let piece = self.buffer_next_pieces.pop_back().unwrap();
-        self.r = 0;
-        self.c = C / 2 - 1;
-        self.piece = Some(piece);
+        self.piece = Some(App::build_piece_with_pos(piece));
         self.new_block_in_buffer();
         self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
         self.old_threshold_sped_up = None;
         self.just_placed = true;
-        self.already_hold = false;
+        if let Some(hold_piece) = self.hold_piece.as_mut() {
+            hold_piece.reset_hold();
+        }
     }
 }
