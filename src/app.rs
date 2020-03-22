@@ -363,7 +363,7 @@ impl<'a> App<'a> {
             let hp = self.hold_piece.take();
 
             self.hold_piece = Some(HoldTetrisPiece::new(p.unwrap().tetris_piece()));
-            if let Some(hp) = hp{
+            if let Some(hp) = hp {
                 self.piece = Some(App::build_piece_with_pos(hp.piece));
             }
 
@@ -435,8 +435,8 @@ impl<'a> App<'a> {
         }
     }
 
-    fn build_piece_with_pos(piece: TetrisPiece)->TetrisPieceWithPosition {
-        TetrisPieceWithPosition::new(0, C/2-1,piece)
+    fn build_piece_with_pos(piece: TetrisPiece) -> TetrisPieceWithPosition {
+        TetrisPieceWithPosition::new(0, C / 2 - 1, piece)
     }
 
     fn next_block(&mut self) {
