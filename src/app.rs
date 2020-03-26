@@ -104,21 +104,21 @@ impl<'a> App<'a> {
     }
 
     fn initial_setup(&mut self, rows: &[&str], pieces: &[TetrisPieceType]) {
-        let mut ri = R - 1;
-        let mut ci = 0;
+        let mut row_index = R - 1;
+        let mut col_index = 0;
         for r in rows {
             for c in r.chars() {
                 if c == '1' {
-                    self.board.set(ri, ci, TetrisPieceType::OTHER);
+                    self.board.set(row_index, col_index, TetrisPieceType::OTHER);
                 }
-                ci += 1;
+                col_index += 1;
             }
-            ri -= 1;
-            ci = 0;
+            row_index -= 1;
+            col_index = 0;
         }
 
-        for p in pieces {
-            self.buffer_next_pieces.push_front(TetrisPiece::new(*p));
+        for piece in pieces {
+            self.buffer_next_pieces.push_front(TetrisPiece::new(*piece));
         }
     }
 
@@ -126,13 +126,13 @@ impl<'a> App<'a> {
         if self.pause {
             None
         } else {
-            let mut shadow_r = pieceInfo.row();
+            let mut shadow_row = pieceInfo.row();
 
-            while !pieceInfo.collides_on_next_with_row(shadow_r, &self.board) {
-                shadow_r += 1;
+            while !pieceInfo.collides_on_next_with_row(shadow_row, &self.board) {
+                shadow_row += 1;
             }
 
-            Some(shadow_r)
+            Some(shadow_row)
         }
     }
 
@@ -204,7 +204,7 @@ impl<'a> App<'a> {
 
         if completed_rows == 4 {
             self.last_score = Some(ScoreType::Tetris);
-        } else if piece_with_position.pieceType() == TetrisPieceType::T {
+        } else if piece_with_position.tetris_piece_ref().pieceType == TetrisPieceType::T {
             // detect T-spin
 
             // TODO check for mini T-spin
@@ -310,12 +310,13 @@ impl<'a> App<'a> {
 
     fn rot_pressed(&mut self, next: bool) {
         let piece_with_pos = self.piece.as_mut().unwrap();
-        let prev_rot = piece_with_pos.rotation();
+        let piece_ref = piece_with_pos.tetris_piece_mut();
+        let prev_rot = piece_ref.rotation;
 
         if next {
-            piece_with_pos.rotate_piece();
+            piece_ref.rotate_piece();
         } else {
-            piece_with_pos.rotate_piece_prev();
+            piece_ref.rotate_piece_prev();
         }
 
         let mut ok = false;
@@ -327,9 +328,9 @@ impl<'a> App<'a> {
 
         if !ok {
             if !next {
-                piece_with_pos.rotate_piece();
+                piece_ref.rotate_piece();
             } else {
-                piece_with_pos.rotate_piece_prev();
+                piece_ref.rotate_piece_prev();
             }
         } else {
             self.last_move = Moves::ROTATE;

@@ -30,13 +30,10 @@ impl TetrisPieceWithPosition {
         &self.piece
     }
 
-    pub fn width(&self) -> isize {
-        self.piece.width()
+    pub fn tetris_piece_mut(&mut self) -> &mut TetrisPiece {
+        &mut self.piece
     }
 
-    pub fn height(&self) -> isize {
-        self.piece.height()
-    }
 
     pub fn finalize_on(&self, board: &mut TetrisBoard) {
         self.piece.call_on_set_cells(|i, j| {
@@ -46,22 +43,6 @@ impl TetrisPieceWithPosition {
                 self.pieceType(),
             );
         });
-    }
-
-    pub fn rotation(&self) -> TetrisPieceRotation {
-        self.piece.rotation
-    }
-
-    pub fn pieceType(&self) -> TetrisPieceType {
-        self.piece.pieceType
-    }
-
-    pub fn rotate_piece(&mut self) {
-        self.piece.rotate_piece()
-    }
-
-    pub fn rotate_piece_prev(&mut self) {
-        self.piece.rotate_piece_prev()
     }
 
     pub fn collides_on_next(&self, matrix: &TetrisBoard) -> bool {
@@ -101,11 +82,7 @@ impl TetrisPieceWithPosition {
         self.c += kick.0;
     }
 
-    pub fn can_rotate(
-        &self,
-        prev_rot: TetrisPieceRotation,
-        matrix: &TetrisBoard,
-    ) -> Option<(isize, isize)> {
+    pub fn can_rotate(&self, prev_rot: TetrisPieceRotation, matrix: &TetrisBoard) -> Option<(isize, isize)> {
         for kick in self.piece.get_kicks(prev_rot) {
             if !self.piece.collides(self.r, self.c, matrix, kick) {
                 return Some(*kick);
@@ -118,7 +95,7 @@ impl TetrisPieceWithPosition {
         self.r += 1;
     }
 
-    fn move_left(&mut self) {
+    pub fn move_left(&mut self) {
         self.c -= 1;
     }
 
