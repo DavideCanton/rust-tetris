@@ -1,10 +1,6 @@
 use crate::{
     board::TetrisBoard,
-    pieces::{
-        Kick,
-        TetrisPiece,
-        TetrisPieceRotation,
-    },
+    pieces::{Kick, TetrisPiece, TetrisPieceRotation},
 };
 
 pub struct TetrisPieceWithPosition {
@@ -38,14 +34,9 @@ impl TetrisPieceWithPosition {
         &mut self.piece
     }
 
-
     pub fn finalize_on(&self, board: &mut TetrisBoard) {
         self.piece.call_on_set_cells(|i, j| {
-            board.set(
-                i + self.row(),
-                j + self.col(),
-                self.piece.pieceType
-            );
+            board.set(i + self.row(), j + self.col(), self.piece.pieceType);
         });
     }
 
@@ -86,9 +77,13 @@ impl TetrisPieceWithPosition {
         self.c += kick.0;
     }
 
-    pub fn can_rotate(&self, prev_rot: TetrisPieceRotation, matrix: &TetrisBoard) -> Option<(isize, isize)> {
+    pub fn can_rotate(
+        &self,
+        prev_rot: TetrisPieceRotation,
+        matrix: &TetrisBoard,
+    ) -> Option<(isize, isize)> {
         for kick in self.piece.get_kicks(prev_rot) {
-            if !self.piece.collides_with_kick(self.r, self.c, matrix, kick) {
+            if !self.piece.collides_kick(self.r, self.c, matrix, kick) {
                 return Some(*kick);
             }
         }

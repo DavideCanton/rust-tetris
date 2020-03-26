@@ -1,6 +1,4 @@
-use crate::{
-    pieces::TetrisPieceType
-};
+use crate::pieces::TetrisPieceType;
 use std::fmt::{Debug, Formatter, Result};
 
 pub type TetrisCell = Option<TetrisPieceType>;

@@ -107,9 +107,6 @@ impl TetrisPiece {
 
         for i in 0..height {
             for j in 0..width {
-                let i = i as isize;
-                let j = j as isize;
-
                 if j + col == 0 {
                     return false;
                 }
@@ -129,9 +126,6 @@ impl TetrisPiece {
 
         for i in 0..height {
             for j in 0..width {
-                let i = i as isize;
-                let j = j as isize;
-
                 if j + col == self.board.cols - 1 {
                     return false;
                 }
@@ -145,15 +139,12 @@ impl TetrisPiece {
         false
     }
 
-    pub fn collides_with_kick(&self, row: isize, col: isize, matrix: &TetrisBoard, kick: &Kick) -> bool {
+    pub fn collides_kick(&self, row: isize, col: isize, matrix: &TetrisBoard, kick: &Kick) -> bool {
         let width = self.board.cols;
         let height = self.board.rows;
 
         for i in 0..height {
             for j in 0..width {
-                let i = i as isize;
-                let j = j as isize;
-
                 if !self.board.is_set(i, j) {
                     continue;
                 }
@@ -180,8 +171,6 @@ impl TetrisPiece {
 
         for i in 0..height {
             for j in 0..width {
-                let i = i as isize;
-                let j = j as isize;
 
                 if self.board.is_set(i, j) {
                     if row + i == matrix.rows as isize - 1 {
@@ -256,7 +245,11 @@ impl TetrisPiece {
         kicks
     }
 
-    pub fn fill_piece_matrix(piece: TetrisPieceType, matrix: &mut TetrisBoard, rotation: TetrisPieceRotation) {
+    pub fn fill_piece_matrix(
+        piece: TetrisPieceType,
+        matrix: &mut TetrisBoard,
+        rotation: TetrisPieceRotation,
+    ) {
         let matrix_str = match piece {
             TetrisPieceType::O => TetrisPiece::get_rotations_O(),
             TetrisPieceType::I => TetrisPiece::get_rotations_I(rotation),

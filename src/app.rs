@@ -9,9 +9,9 @@ use crate::{
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
 use piston::input::*;
 
+use crate::pieces::TetrisPieceRotation;
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
-use crate::pieces::TetrisPieceRotation;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
