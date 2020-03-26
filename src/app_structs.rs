@@ -1,6 +1,10 @@
 use crate::{
     board::TetrisBoard,
-    pieces::{TetrisPiece, TetrisPieceRotation, TetrisPieceType, Kick}
+    pieces::{
+        Kick,
+        TetrisPiece,
+        TetrisPieceRotation,
+    },
 };
 
 pub struct TetrisPieceWithPosition {
@@ -40,7 +44,7 @@ impl TetrisPieceWithPosition {
             board.set(
                 i + self.row(),
                 j + self.col(),
-                self.pieceType(),
+                self.piece.pieceType
             );
         });
     }
@@ -84,11 +88,11 @@ impl TetrisPieceWithPosition {
 
     pub fn can_rotate(&self, prev_rot: TetrisPieceRotation, matrix: &TetrisBoard) -> Option<(isize, isize)> {
         for kick in self.piece.get_kicks(prev_rot) {
-            if !self.piece.collides(self.r, self.c, matrix, kick) {
+            if !self.piece.collides_with_kick(self.r, self.c, matrix, kick) {
                 return Some(*kick);
             }
         }
-        return None;
+        None
     }
 
     pub fn move_down(&mut self) {
@@ -106,20 +110,20 @@ impl TetrisPieceWithPosition {
 
 pub struct HoldTetrisPiece {
     pub piece: TetrisPiece,
-    pub already_hold: bool
+    pub already_hold: bool,
 }
 
 impl HoldTetrisPiece {
     pub fn new(mut piece: TetrisPiece) -> Self {
         piece.set_rotation(TetrisPieceRotation::ZERO);
-        HoldTetrisPiece{
+        HoldTetrisPiece {
             piece,
-            already_hold: false
+            already_hold: false,
         }
     }
 
     pub fn can_swap(obj: &Option<HoldTetrisPiece>) -> bool {
-        return obj.is_none() || !obj.as_ref().unwrap().already_hold;
+        obj.is_none() || !obj.as_ref().unwrap().already_hold
     }
     pub fn set_hold(&mut self) {
         self.already_hold = true;

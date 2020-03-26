@@ -11,6 +11,7 @@ use piston::input::*;
 
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use crate::pieces::TetrisPieceRotation;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
@@ -310,13 +311,17 @@ impl<'a> App<'a> {
 
     fn rot_pressed(&mut self, next: bool) {
         let piece_with_pos = self.piece.as_mut().unwrap();
-        let piece_ref = piece_with_pos.tetris_piece_mut();
-        let prev_rot = piece_ref.rotation;
+        let prev_rot: TetrisPieceRotation;
 
-        if next {
-            piece_ref.rotate_piece();
-        } else {
-            piece_ref.rotate_piece_prev();
+        {
+            let piece_ref = piece_with_pos.tetris_piece_mut();
+            prev_rot = piece_ref.rotation;
+
+            if next {
+                piece_ref.rotate_piece();
+            } else {
+                piece_ref.rotate_piece_prev();
+            }
         }
 
         let mut ok = false;
@@ -326,14 +331,17 @@ impl<'a> App<'a> {
             ok = true;
         }
 
-        if !ok {
-            if !next {
-                piece_ref.rotate_piece();
+        {
+            let piece_ref = piece_with_pos.tetris_piece_mut();
+            if !ok {
+                if !next {
+                    piece_ref.rotate_piece();
+                } else {
+                    piece_ref.rotate_piece_prev();
+                }
             } else {
-                piece_ref.rotate_piece_prev();
+                self.last_move = Moves::ROTATE;
             }
-        } else {
-            self.last_move = Moves::ROTATE;
         }
     }
 

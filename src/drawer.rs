@@ -26,7 +26,7 @@ impl<'a, 'b> Drawer<'a, 'b> {
     }
 
     pub fn try_draw_shadow(&mut self, shadow_r: isize, piece: &TetrisPieceWithPosition) {
-        if piece.row() + piece.height() <= shadow_r {
+        if piece.row() + piece.tetris_piece_ref().height() <= shadow_r {
             let ps = [
                 BASE_X as Scalar + piece.col() as Scalar * WIDTH,
                 shadow_r as Scalar * WIDTH,

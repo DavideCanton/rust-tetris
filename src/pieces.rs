@@ -20,7 +20,7 @@ pub enum TetrisPieceRotation {
     LEFT,
 }
 
-pub type Kick = (isize,isize);
+pub type Kick = (isize, isize);
 
 static I_KICKS: [[Kick; 5]; 8] = [
     [(0, 0), (-2, 0), (1, 0), (-2, -1), (1, 2)],
@@ -51,15 +51,15 @@ pub struct TetrisPiece {
 
 impl TetrisPiece {
     pub fn new(piece: TetrisPieceType) -> Self {
-        let mut pi = TetrisPiece {
+        let mut tetris_piece = TetrisPiece {
             pieceType: piece,
             rotation: TetrisPieceRotation::ZERO,
             board: TetrisBoard::new(0, 0),
         };
 
-        pi.setup_board();
+        tetris_piece.setup_board();
 
-        pi
+        tetris_piece
     }
 
     fn setup_board(&mut self) {
@@ -110,20 +110,11 @@ impl TetrisPiece {
                 let i = i as isize;
                 let j = j as isize;
 
-                let p_cell = self.board.is_set(i, j);
-                let m_cell = matrix.is_set(row + i, j + col);
-
-                if p_cell && m_cell {
-                    panic!("Piece overlapping matrix!");
-                }
-
                 if j + col == 0 {
                     return false;
                 }
 
-                let mn_cell = matrix.is_set(row + i, j + col - 1);
-
-                if p_cell && mn_cell {
+                if self.board.is_set(i, j) && matrix.is_set(row + i, j + col - 1) {
                     return true;
                 }
             }
@@ -141,20 +132,11 @@ impl TetrisPiece {
                 let i = i as isize;
                 let j = j as isize;
 
-                let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(row + i, j + col);
-
-                if pcell && mcell {
-                    panic!("Piece overlapping matrix!");
-                }
-
                 if j + col == self.board.cols - 1 {
                     return false;
                 }
 
-                let mncell = matrix.is_set(row + i, j + col + 1);
-
-                if pcell && mncell {
+                if self.board.is_set(i, j) && matrix.is_set(row + i, j + col + 1) {
                     return true;
                 }
             }
@@ -163,13 +145,7 @@ impl TetrisPiece {
         false
     }
 
-    pub fn collides(
-        &self,
-        row: isize,
-        col: isize,
-        matrix: &TetrisBoard,
-        kick: &Kick,
-    ) -> bool {
+    pub fn collides_with_kick(&self, row: isize, col: isize, matrix: &TetrisBoard, kick: &Kick) -> bool {
         let width = self.board.cols;
         let height = self.board.rows;
 
@@ -178,9 +154,7 @@ impl TetrisPiece {
                 let i = i as isize;
                 let j = j as isize;
 
-                let pcell = self.board.is_set(i, j);
-
-                if !pcell {
+                if !self.board.is_set(i, j) {
                     continue;
                 }
 
@@ -190,9 +164,8 @@ impl TetrisPiece {
                 if ei < 0 || ei >= matrix.rows || ej < 0 || ej >= matrix.cols {
                     return true;
                 }
-                let mcell = matrix.is_set(ei, ej);
 
-                if mcell {
+                if matrix.is_set(ei, ej) {
                     return true;
                 }
             }
@@ -210,21 +183,14 @@ impl TetrisPiece {
                 let i = i as isize;
                 let j = j as isize;
 
-                let pcell = self.board.is_set(i, j);
-                let mcell = matrix.is_set(row + i, j + col);
+                if self.board.is_set(i, j) {
+                    if row + i == matrix.rows as isize - 1 {
+                        return true;
+                    }
 
-                if pcell && mcell {
-                    // panic!("Piece overlapping matrix!");
-                }
-
-                if pcell && row + i == matrix.rows as isize - 1 {
-                    return true;
-                }
-
-                let mncell = matrix.is_set(row + i + 1, j + col);
-
-                if pcell && mncell {
-                    return true;
+                    if matrix.is_set(row + i + 1, j + col) {
+                        return true;
+                    }
                 }
             }
         }
@@ -252,9 +218,12 @@ impl TetrisPiece {
     }
 
     fn prev_rotation(rotation: TetrisPieceRotation) -> TetrisPieceRotation {
-        TetrisPiece::next_rotation(TetrisPiece::next_rotation(TetrisPiece::next_rotation(
-            rotation,
-        )))
+        match rotation {
+            TetrisPieceRotation::ZERO => TetrisPieceRotation::LEFT,
+            TetrisPieceRotation::LEFT => TetrisPieceRotation::TWO,
+            TetrisPieceRotation::TWO => TetrisPieceRotation::RIGHT,
+            TetrisPieceRotation::RIGHT => TetrisPieceRotation::ZERO,
+        }
     }
 
     pub fn get_piece_size(piece: TetrisPieceType) -> (isize, isize) {
@@ -266,7 +235,7 @@ impl TetrisPiece {
     }
 
     pub fn get_kicks(&self, from_rot: TetrisPieceRotation) -> &'static [Kick] {
-        let i = match (from_rot, self.rotation) {
+        let kick_index = match (from_rot, self.rotation) {
             (TetrisPieceRotation::ZERO, TetrisPieceRotation::RIGHT) => 0,
             (TetrisPieceRotation::RIGHT, TetrisPieceRotation::ZERO) => 1,
             (TetrisPieceRotation::RIGHT, TetrisPieceRotation::TWO) => 2,
@@ -279,19 +248,15 @@ impl TetrisPiece {
         };
 
         let kicks: &[Kick] = match self.pieceType {
-            TetrisPieceType::I => &I_KICKS[i],
+            TetrisPieceType::I => &I_KICKS[kick_index],
             TetrisPieceType::O => &[(0, 0)],
-            _ => &OTHER_KICKS[i],
+            _ => &OTHER_KICKS[kick_index],
         };
 
         kicks
     }
 
-    pub fn fill_piece_matrix(
-        piece: TetrisPieceType,
-        matrix: &mut TetrisBoard,
-        rotation: TetrisPieceRotation,
-    ) {
+    pub fn fill_piece_matrix(piece: TetrisPieceType, matrix: &mut TetrisBoard, rotation: TetrisPieceRotation) {
         let matrix_str = match piece {
             TetrisPieceType::O => TetrisPiece::get_rotations_O(),
             TetrisPieceType::I => TetrisPiece::get_rotations_I(rotation),
@@ -304,14 +269,14 @@ impl TetrisPiece {
         };
 
         for (row, row_vec) in matrix_str.split('|').zip(matrix.rows_mut()) {
-            for (c, col) in row.chars().zip(row_vec.iter_mut()) {
-                let b = match c {
+            for (char, col) in row.chars().zip(row_vec.iter_mut()) {
+                let char = match char {
                     '0' => None,
                     '1' => Some(piece),
                     _ => panic!(),
                 };
 
-                *col = b;
+                *col = char;
             }
         }
     }
