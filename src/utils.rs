@@ -1,3 +1,4 @@
+use crate::pieces::Kick;
 use crate::pieces::TetrisPieceType;
 use graphics::types::Color;
 
@@ -53,6 +54,11 @@ pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
     }
 
     color
+}
+
+
+pub fn is_not_empty(kick: Kick) -> bool {
+    kick.0 != 0 || kick.1 != 0
 }
 
 #[cfg(test)]

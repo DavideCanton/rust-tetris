@@ -1,3 +1,5 @@
+use crate::utils::is_not_empty;
+use crate::pieces::Kick;
 use crate::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     board::TetrisBoard,
@@ -51,6 +53,7 @@ pub struct App<'a> {
     last_score: Option<ScoreType>,
     back_to_back: bool,
     glyphs: Rc<RefCell<GlyphCache<'a>>>,
+    last_kick: Option<Kick>,
 }
 
 impl<'a> App<'a> {
@@ -75,6 +78,7 @@ impl<'a> App<'a> {
             last_score: None,
             glyphs: Rc::new(RefCell::new(glyphs)),
             back_to_back: false,
+            last_kick: None,
         }
     }
 
@@ -208,7 +212,6 @@ impl<'a> App<'a> {
         } else if piece_with_position.tetris_piece_ref().pieceType == TetrisPieceType::T {
             // detect T-spin
 
-            // TODO check for mini T-spin
             if completed_rows > 0 && self.last_move == Moves::ROTATE {
                 let center_r = piece_with_position.row() + 1;
                 let center_c = piece_with_position.col() + 1;
@@ -325,9 +328,13 @@ impl<'a> App<'a> {
         }
 
         let mut ok = false;
+        let mut kick_o = None;
 
         if let Some(kick) = piece_with_pos.can_rotate(prev_rot, &self.board) {
             piece_with_pos.kick_by(kick);
+            if is_not_empty(kick) {
+                kick_o = Some(kick);
+            }
             ok = true;
         }
 
@@ -341,6 +348,7 @@ impl<'a> App<'a> {
                 }
             } else {
                 self.last_move = Moves::ROTATE;
+                self.last_kick = kick_o;
             }
         }
     }

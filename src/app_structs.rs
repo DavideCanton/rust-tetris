@@ -81,7 +81,7 @@ impl TetrisPieceWithPosition {
         &self,
         prev_rot: TetrisPieceRotation,
         matrix: &TetrisBoard,
-    ) -> Option<(isize, isize)> {
+    ) -> Option<Kick> {
         for kick in self.piece.get_kicks(prev_rot) {
             if !self.piece.collides_kick(self.r, self.c, matrix, kick) {
                 return Some(*kick);
