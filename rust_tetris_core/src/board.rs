@@ -1,7 +1,11 @@
 use crate::pieces::TetrisPieceType;
 use std::fmt::{Debug, Formatter, Result};
 
-pub type TetrisCell = Option<TetrisPieceType>;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TetrisCell {
+    FilledCell(TetrisPieceType),
+    EmptyCell,
+}
 
 pub struct TetrisBoard {
     pub rows: isize,
@@ -16,7 +20,7 @@ impl TetrisBoard {
             rows,
             cols,
             data: Vec::with_capacity(rows as usize),
-            empty_row_proto: vec![None; cols as usize],
+            empty_row_proto: vec![TetrisCell::EmptyCell; cols as usize],
         };
 
         for _ in 0..rows {
@@ -39,11 +43,11 @@ impl TetrisBoard {
     }
 
     pub fn set(&mut self, i: isize, j: isize, p: TetrisPieceType) {
-        self.set_val(i, j, Some(p));
+        self.set_val(i, j, TetrisCell::FilledCell(p));
     }
 
     pub fn clear(&mut self, i: isize, j: isize) {
-        self.set_val(i, j, None);
+        self.set_val(i, j, TetrisCell::EmptyCell);
     }
 
     pub fn set_val(&mut self, i: isize, j: isize, b: TetrisCell) {
@@ -76,10 +80,10 @@ impl TetrisBoard {
                     to = Some(i);
                 }
             } else if from.is_some() {
-                let fromI = from.unwrap();
-                let toI = to.unwrap_or(fromI);
+                let from_i = from.unwrap();
+                let to_i = to.unwrap_or(from_i);
 
-                ranges.push((fromI, toI - 1));
+                ranges.push((from_i, to_i - 1));
                 from = None;
                 to = None;
             }

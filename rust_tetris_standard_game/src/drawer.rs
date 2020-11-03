@@ -1,18 +1,24 @@
-use crate::{
-    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
+use std::{cell::RefCell, ops::DerefMut, rc::Rc};
+
+use graphics::{
+    Context,
+    math::Vec2d,
+    types::{Color, FontSize},
+};
+use graphics::{Transformed, types::Scalar};
+use opengl_graphics::{GlGraphics, GlyphCache};
+
+use rust_tetris_core:: {
     board::TetrisBoard,
     pieces::TetrisPiece,
     pieces::TetrisPieceType,
+
+};
+
+use crate::{
+    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     utils::*,
 };
-use graphics::{
-    math::Vec2d,
-    types::{Color, FontSize},
-    Context,
-};
-use graphics::{types::Scalar, Transformed};
-use opengl_graphics::{GlGraphics, GlyphCache};
-use std::{cell::RefCell, ops::DerefMut, rc::Rc};
 
 pub struct Drawer<'a, 'b> {
     gl: &'a mut GlGraphics,

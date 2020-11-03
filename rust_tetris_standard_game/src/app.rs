@@ -1,19 +1,21 @@
-use crate::utils::is_not_empty;
-use crate::pieces::Kick;
-use crate::{
-    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
-    board::TetrisBoard,
-    controller::{Controller, ControllerKey},
-    drawer::Drawer,
-    pieces::{TetrisPiece, TetrisPieceType},
-    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
-};
+use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+
 use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
 use piston::input::*;
-
-use crate::pieces::TetrisPieceRotation;
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+
+use rust_tetris_core::{
+    board::TetrisBoard,
+    pieces::{Kick, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
+};
+
+use crate::{
+    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
+    controller::{Controller, ControllerKey},
+    drawer::Drawer,
+    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
+};
+use crate::utils::is_not_empty;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {

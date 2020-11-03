@@ -1,14 +1,6 @@
-[package]
-name = "rust-tetris"
-version = "0.1.0"
-authors = ["Kami <davide.canton5@gmail.com>"]
-edition = "2018"
+[workspace]
 
-[dependencies]
-piston = "0.49.0"
-piston2d-graphics = "0.36.0"
-pistoncore-glutin_window = "0.63.0"
-piston2d-opengl_graphics = "0.72.0"
-piston_window = "0.107.0"
-rand = "0.7.3"
-find_folder = "0.3.0"
+members = [
+    "rust_tetris_core",
+    "rust_tetris_standard_game"
+]

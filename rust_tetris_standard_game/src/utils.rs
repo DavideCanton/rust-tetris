@@ -1,6 +1,9 @@
-use crate::pieces::Kick;
-use crate::pieces::TetrisPieceType;
 use graphics::types::Color;
+
+use rust_tetris_core::{
+    board::TetrisCell,
+    pieces::{Kick, TetrisPieceType}
+};
 
 pub const R: isize = 20;
 pub const C: isize = 10;
@@ -34,16 +37,16 @@ pub const L_COLOR: Color = ORANGE;
 pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
-pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
+pub fn piece_to_color(p: TetrisCell, is_shadow: bool) -> Color {
     let original_color = match p {
-        TetrisPieceType::O => O_COLOR,
-        TetrisPieceType::I => I_COLOR,
-        TetrisPieceType::S => S_COLOR,
-        TetrisPieceType::Z => Z_COLOR,
-        TetrisPieceType::T => T_COLOR,
-        TetrisPieceType::L => L_COLOR,
-        TetrisPieceType::J => J_COLOR,
-        TetrisPieceType::OTHER => OTHER_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::O) => O_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::I) => I_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::S) => S_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::Z) => Z_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::T) => T_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::L) => L_COLOR,
+        TetrisCell::FilledCell(TetrisPieceType::J) => J_COLOR,
+        TetrisCell::EmptyCell => OTHER_COLOR,
     };
 
     let mut color = [0.0; 4];

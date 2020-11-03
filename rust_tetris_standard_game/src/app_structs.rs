@@ -1,4 +1,4 @@
-use crate::{
+use rust_tetris_core::{
     board::TetrisBoard,
     pieces::{Kick, TetrisPiece, TetrisPieceRotation},
 };

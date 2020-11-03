@@ -5,10 +5,8 @@
 #[macro_use]
 mod app;
 mod app_structs;
-mod board;
 mod controller;
 mod drawer;
-mod pieces;
 mod utils;
 
 use crate::app::App;
