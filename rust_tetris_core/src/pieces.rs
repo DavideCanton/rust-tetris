@@ -1,7 +1,7 @@
-use crate::board::TetrisBoard;
+use crate::board::{TetrisBoard, TetrisCell, playable_piece_to_cell};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TetrisPieceType {
+pub enum PlayableTetrisPieceType {
     T,
     L,
     J,
@@ -9,6 +9,12 @@ pub enum TetrisPieceType {
     I,
     S,
     Z,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TetrisPieceType {
+    Playable(PlayableTetrisPieceType),
+    NotPlayable,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,13 +49,13 @@ static OTHER_KICKS: [[Kick; 5]; 8] = [
 ];
 
 pub struct TetrisPiece {
-    pub piece_type: TetrisPieceType,
+    pub piece_type: PlayableTetrisPieceType,
     pub board: TetrisBoard,
     pub rotation: TetrisPieceRotation,
 }
 
 impl TetrisPiece {
-    pub fn new(piece: TetrisPieceType) -> Self {
+    pub fn new(piece: PlayableTetrisPieceType) -> Self {
         let mut tetris_piece = TetrisPiece {
             piece_type: piece,
             rotation: TetrisPieceRotation::ZERO,
@@ -170,7 +176,6 @@ impl TetrisPiece {
 
         for i in 0..height {
             for j in 0..width {
-
                 if self.board.is_set(i, j) {
                     if row + i == matrix.rows as isize - 1 {
                         return true;
@@ -186,7 +191,7 @@ impl TetrisPiece {
         false
     }
 
-    fn get_piece_matrix(piece: TetrisPieceType, rotation: TetrisPieceRotation) -> TetrisBoard {
+    fn get_piece_matrix(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> TetrisBoard {
         let (r, c) = TetrisPiece::get_piece_size(piece);
 
         let mut matrix = TetrisBoard::new(r, c);
@@ -214,10 +219,10 @@ impl TetrisPiece {
         }
     }
 
-    pub fn get_piece_size(piece: TetrisPieceType) -> (isize, isize) {
+    pub fn get_piece_size(piece: PlayableTetrisPieceType) -> (isize, isize) {
         match piece {
-            TetrisPieceType::I => (4, 4),
-            TetrisPieceType::O => (3, 4),
+            PlayableTetrisPieceType::I => (4, 4),
+            PlayableTetrisPieceType::O => (3, 4),
             _ => (3, 3),
         }
     }
@@ -245,7 +250,7 @@ impl TetrisPiece {
     }
 
     pub fn fill_piece_matrix(
-        piece: TetrisPieceType,
+        piece: PlayableTetrisPieceType,
         matrix: &mut TetrisBoard,
         rotation: TetrisPieceRotation,
     ) {
@@ -259,20 +264,22 @@ impl TetrisPiece {
                     _ => panic!(),
                 };
 
-                *col = char;
+                *col = char
+                    .map(playable_piece_to_cell)
+                    .unwrap_or(TetrisCell::EmptyCell)
             }
         }
     }
 
-    fn get_rotations(piece: TetrisPieceType, rotation: TetrisPieceRotation) -> &'static str {
-       match piece {
-            TetrisPieceType::O => TetrisPiece::get_rotations_o(),
-            TetrisPieceType::I => TetrisPiece::get_rotations_i(rotation),
-            TetrisPieceType::Z => TetrisPiece::get_rotations_z(rotation),
-            TetrisPieceType::S => TetrisPiece::get_rotations_s(rotation),
-            TetrisPieceType::J => TetrisPiece::get_rotations_j(rotation),
-            TetrisPieceType::L => TetrisPiece::get_rotations_l(rotation),
-            TetrisPieceType::T => TetrisPiece::get_rotations_t(rotation),
+    fn get_rotations(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> &'static str {
+        match piece {
+            PlayableTetrisPieceType::O => TetrisPiece::get_rotations_o(),
+            PlayableTetrisPieceType::I => TetrisPiece::get_rotations_i(rotation),
+            PlayableTetrisPieceType::Z => TetrisPiece::get_rotations_z(rotation),
+            PlayableTetrisPieceType::S => TetrisPiece::get_rotations_s(rotation),
+            PlayableTetrisPieceType::J => TetrisPiece::get_rotations_j(rotation),
+            PlayableTetrisPieceType::L => TetrisPiece::get_rotations_l(rotation),
+            PlayableTetrisPieceType::T => TetrisPiece::get_rotations_t(rotation),
         }
     }
 

@@ -14,6 +14,7 @@ use rust_tetris_core:: {
     pieces::TetrisPieceType,
 
 };
+use rust_tetris_core::board::TetrisCell;
 
 use crate::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},

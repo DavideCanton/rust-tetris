@@ -16,6 +16,8 @@ use crate::{
     utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
 };
 use crate::utils::is_not_empty;
+use rust_tetris_core::board::TetrisCell;
+use rust_tetris_core::pieces::PlayableTetrisPieceType;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
@@ -50,7 +52,7 @@ pub struct App<'a> {
     current_threshold: f64,
     old_threshold_sped_up: Option<f64>,
     buffer_next_pieces: VecDeque<TetrisPiece>,
-    internal_permutation: VecDeque<TetrisPieceType>,
+    internal_permutation: VecDeque<PlayableTetrisPieceType>,
     last_move: Moves,
     last_score: Option<ScoreType>,
     back_to_back: bool,
@@ -110,13 +112,13 @@ impl<'a> App<'a> {
         }
     }
 
-    fn initial_setup(&mut self, rows: &[&str], pieces: &[TetrisPieceType]) {
+    fn initial_setup(&mut self, rows: &[&str], pieces: &[PlayableTetrisPieceType]) {
         let mut row_index = R - 1;
         let mut col_index = 0;
         for r in rows {
             for c in r.chars() {
                 if c == '1' {
-                    self.board.set(row_index, col_index, TetrisPieceType::OTHER);
+                    self.board.set(row_index, col_index, TetrisPieceType::NotPlayable);
                 }
                 col_index += 1;
             }
@@ -211,7 +213,7 @@ impl<'a> App<'a> {
 
         if completed_rows == 4 {
             self.last_score = Some(ScoreType::Tetris);
-        } else if piece_with_position.tetris_piece_ref().pieceType == TetrisPieceType::T {
+        } else if piece_with_position.tetris_piece_ref().piece_type == PlayableTetrisPieceType::T {
             // detect T-spin
 
             if completed_rows > 0 && self.last_move == Moves::ROTATE {

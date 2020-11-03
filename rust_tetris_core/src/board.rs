@@ -1,10 +1,18 @@
-use crate::pieces::TetrisPieceType;
+use crate::pieces::{TetrisPieceType, PlayableTetrisPieceType};
 use std::fmt::{Debug, Formatter, Result};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TetrisCell {
     FilledCell(TetrisPieceType),
     EmptyCell,
+}
+
+pub fn playable_piece_to_cell(p: PlayableTetrisPieceType) -> TetrisCell {
+    return TetrisCell::FilledCell(TetrisPieceType::Playable(p));
+}
+
+pub fn not_playable_piece_to_cell() -> TetrisCell {
+    return TetrisCell::FilledCell(TetrisPieceType::NotPlayable);
 }
 
 pub struct TetrisBoard {
