@@ -278,16 +278,14 @@ impl<'a> App<'a> {
             let mut next_block = false;
             self.just_placed = false;
 
-            {
-                let piece = self.piece.as_mut().unwrap();
+            let piece = self.piece.as_mut().unwrap();
 
-                if piece.collides_on_next(&self.board) {
-                    next_block = true;
-                } else {
-                    piece.move_down();
-                    self.last_move = Moves::FALL;
-                    self.last_movement = self.time;
-                }
+            if piece.collides_on_next(&self.board) {
+                next_block = true;
+            } else {
+                piece.move_down();
+                self.last_move = Moves::FALL;
+                self.last_movement = self.time;
             }
 
             if next_block {
@@ -322,15 +320,13 @@ impl<'a> App<'a> {
         let piece_with_pos = self.piece.as_mut().unwrap();
         let prev_rot: TetrisPieceRotation;
 
-        {
-            let piece_ref = piece_with_pos.tetris_piece_mut();
-            prev_rot = piece_ref.rotation;
+        let piece_ref = piece_with_pos.tetris_piece_mut();
+        prev_rot = piece_ref.rotation;
 
-            if next {
-                piece_ref.rotate_piece();
-            } else {
-                piece_ref.rotate_piece_prev();
-            }
+        if next {
+            piece_ref.rotate_piece();
+        } else {
+            piece_ref.rotate_piece_prev();
         }
 
         let mut ok = false;
@@ -344,18 +340,16 @@ impl<'a> App<'a> {
             ok = true;
         }
 
-        {
-            let piece_ref = piece_with_pos.tetris_piece_mut();
-            if !ok {
-                if !next {
-                    piece_ref.rotate_piece();
-                } else {
-                    piece_ref.rotate_piece_prev();
-                }
+        let piece_ref = piece_with_pos.tetris_piece_mut();
+        if !ok {
+            if !next {
+                piece_ref.rotate_piece();
             } else {
-                self.last_move = Moves::ROTATE;
-                self.last_kick = kick_o;
+                piece_ref.rotate_piece_prev();
             }
+        } else {
+            self.last_move = Moves::ROTATE;
+            self.last_kick = kick_o;
         }
     }
 
