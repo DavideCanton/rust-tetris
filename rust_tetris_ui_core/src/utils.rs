@@ -3,6 +3,7 @@ use graphics::types::Color;
 use rust_tetris_core::{
     pieces::{Kick, TetrisPieceType},
 };
+use rust_tetris_core::pieces::PlayableTetrisPieceType;
 
 pub const R: isize = 20;
 pub const C: isize = 10;
@@ -36,26 +37,36 @@ pub const L_COLOR: Color = ORANGE;
 pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
-pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
-    let original_color = match p {
-        TetrisPieceType::O => O_COLOR,
-        TetrisPieceType::I => I_COLOR,
-        TetrisPieceType::S => S_COLOR,
-        TetrisPieceType::Z => Z_COLOR,
-        TetrisPieceType::T => T_COLOR,
-        TetrisPieceType::L => L_COLOR,
-        TetrisPieceType::J => J_COLOR,
-        TetrisPieceType::NEUTRAL => OTHER_COLOR,
-    };
-
+fn apply_shadow(original_color: &Color, is_shadow: bool) -> Color {
     let mut color = [0.0; 4];
-    color.copy_from_slice(&original_color);
+    color.copy_from_slice(original_color);
 
     if is_shadow {
         color[3] = 0.3;
     }
 
     color
+}
+
+pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
+    match p {
+        TetrisPieceType::Playable(p) => playable_piece_to_color(p, is_shadow),
+        TetrisPieceType::NotPlayable => apply_shadow(&OTHER_COLOR, is_shadow)
+    }
+}
+
+pub fn playable_piece_to_color(p: PlayableTetrisPieceType, is_shadow: bool) -> Color {
+    let original_color = match p {
+        PlayableTetrisPieceType::O => O_COLOR,
+        PlayableTetrisPieceType::I => I_COLOR,
+        PlayableTetrisPieceType::S => S_COLOR,
+        PlayableTetrisPieceType::Z => Z_COLOR,
+        PlayableTetrisPieceType::T => T_COLOR,
+        PlayableTetrisPieceType::L => L_COLOR,
+        PlayableTetrisPieceType::J => J_COLOR,
+    };
+
+    apply_shadow(&original_color, is_shadow)
 }
 
 

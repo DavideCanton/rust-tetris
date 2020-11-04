@@ -8,16 +8,18 @@ use rust_tetris_core::{
     board::TetrisBoard,
     pieces::{Kick, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
 };
+use rust_tetris_core::{
+    pieces::PlayableTetrisPieceType
+};
+use rust_tetris_ui_core::{
+    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
+    drawer::Drawer,
+    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, is_not_empty, R, SPED_UP_THRESHOLD},
+};
 
 use crate::{
-    app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     controller::{Controller, ControllerKey},
-    drawer::Drawer,
-    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
 };
-use crate::utils::is_not_empty;
-use rust_tetris_core::board::TetrisCell;
-use rust_tetris_core::pieces::PlayableTetrisPieceType;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
@@ -438,13 +440,13 @@ impl<'a> App<'a> {
 
     fn fill_permutation(&mut self) {
         let mut nums: Vec<_> = vec![
-            TetrisPieceType::I,
-            TetrisPieceType::S,
-            TetrisPieceType::Z,
-            TetrisPieceType::O,
-            TetrisPieceType::T,
-            TetrisPieceType::L,
-            TetrisPieceType::J,
+            PlayableTetrisPieceType::I,
+            PlayableTetrisPieceType::S,
+            PlayableTetrisPieceType::Z,
+            PlayableTetrisPieceType::O,
+            PlayableTetrisPieceType::T,
+            PlayableTetrisPieceType::L,
+            PlayableTetrisPieceType::J,
         ];
         nums.as_mut_slice().shuffle(&mut self.rng);
         self.internal_permutation.extend(nums.into_iter());

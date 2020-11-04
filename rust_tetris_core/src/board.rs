@@ -1,5 +1,6 @@
-use crate::pieces::{TetrisPieceType, PlayableTetrisPieceType};
 use std::fmt::{Debug, Formatter, Result};
+
+use crate::pieces::{PlayableTetrisPieceType, TetrisPieceType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TetrisCell {
@@ -7,8 +8,15 @@ pub enum TetrisCell {
     EmptyCell,
 }
 
-pub fn playable_piece_to_cell(p: PlayableTetrisPieceType) -> TetrisCell {
-    return TetrisCell::FilledCell(TetrisPieceType::Playable(p));
+pub fn is_filled(cell: TetrisCell) -> bool {
+    match cell {
+        TetrisCell::FilledCell(_) => true,
+        TetrisCell::EmptyCell => false
+    }
+}
+
+pub fn playable_piece_to_cell(piece: PlayableTetrisPieceType) -> TetrisCell {
+    return TetrisCell::FilledCell(TetrisPieceType::Playable(piece));
 }
 
 pub fn not_playable_piece_to_cell() -> TetrisCell {
@@ -46,7 +54,7 @@ impl TetrisBoard {
         if i >= self.rows || j >= self.cols || i < 0 || j < 0 {
             false
         } else {
-            self.data[i as usize][j as usize].is_some()
+            is_filled(self.data[i as usize][j as usize])
         }
     }
 
@@ -63,13 +71,15 @@ impl TetrisBoard {
     }
 
     pub fn is_complete(&self, i: isize) -> bool {
-        self.data[i as usize].iter().all(|cell| cell.is_some())
+        self.data[i as usize].iter().all(|&cell| is_filled(cell))
     }
 
     pub fn is_empty(&self) -> bool {
         self.data
             .iter()
-            .all(|row| row.iter().all(|cell| cell.is_none()))
+            .all(|row|
+                row.iter().all(|&cell| !is_filled(cell))
+            )
     }
 
     pub fn completed_rows(&mut self) -> Vec<(isize, isize)> {
@@ -106,11 +116,11 @@ impl TetrisBoard {
         }
     }
 
-    pub fn rows(&self) -> impl Iterator<Item = &Vec<TetrisCell>> {
+    pub fn rows(&self) -> impl Iterator<Item=&Vec<TetrisCell>> {
         self.data.iter()
     }
 
-    pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut Vec<TetrisCell>> {
+    pub fn rows_mut(&mut self) -> impl Iterator<Item=&mut Vec<TetrisCell>> {
         self.data.iter_mut()
     }
 
@@ -160,10 +170,10 @@ impl Debug for TetrisBoard {
     fn fmt(&self, formatter: &mut Formatter) -> Result {
         for i in 0..self.rows {
             for j in 0..self.cols {
-                let cell = self.get(i, j);
-
-                let c = cell.map_or(' ', |_| '*');
-
+                let c = match self.get(i, j) {
+                    TetrisCell::FilledCell(_) => '*',
+                    TetrisCell::EmptyCell => ' '
+                };
                 write!(formatter, "{}", c)?
             }
 
@@ -176,8 +186,10 @@ impl Debug for TetrisBoard {
 
 #[cfg(test)]
 mod tests {
+    use crate::pieces::{PlayableTetrisPieceType, TetrisPieceType};
+
+    use super::is_filled;
     use super::TetrisBoard;
-    use crate::pieces::TetrisPieceType;
 
     fn load_board(board: &mut TetrisBoard, s: &str) {
         let c = board.cols;
@@ -186,7 +198,7 @@ mod tests {
             let i = i as isize;
             match ch {
                 ' ' => board.clear(i / c, i % c),
-                '*' => board.set(i / c, i % c, TetrisPieceType::O),
+                '*' => board.set(i / c, i % c, TetrisPieceType::Playable(PlayableTetrisPieceType::O)),
                 _ => panic!(),
             }
         }
@@ -210,9 +222,9 @@ mod tests {
         for i in 0..5 {
             for j in 0..3 {
                 if (i == 3 || i == 4) && j == 2 {
-                    assert!(board.get(i, j).is_some());
+                    assert!(is_filled(board.get(i, j)));
                 } else {
-                    assert!(board.get(i, j).is_none());
+                    assert!(!is_filled(board.get(i, j)));
                 }
             }
         }
@@ -235,7 +247,7 @@ mod tests {
 
         for i in 0..5 {
             for j in 0..3 {
-                assert!(board.get(i, j).is_none());
+                assert!(!is_filled(board.get(i, j)));
             }
         }
     }

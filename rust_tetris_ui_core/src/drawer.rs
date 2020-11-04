@@ -55,7 +55,7 @@ impl<'a, 'b> Drawer<'a, 'b> {
             let i = i as Scalar;
             let j = j as Scalar;
             let pos = [j * WIDTH, i * WIDTH];
-            let color = piece_to_color(piece.pieceType, is_shadow);
+            let color = playable_piece_to_color(piece.piece_type, is_shadow);
             self.draw_square_by_pos([base[0] + pos[0], base[1] + pos[1]], WIDTH, color);
         });
     }
@@ -68,7 +68,7 @@ impl<'a, 'b> Drawer<'a, 'b> {
     pub fn draw_board(&mut self, base_x: Scalar, base_y: Scalar, piece_board: &TetrisBoard) {
         for i in 0..piece_board.rows {
             for j in 0..piece_board.cols {
-                if let Some(p) = piece_board.get(i, j) {
+                if let TetrisCell::FilledCell(p) = piece_board.get(i, j) {
                     let i = i as isize;
                     let j = j as isize;
 

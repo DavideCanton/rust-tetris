@@ -2,6 +2,7 @@ use rust_tetris_core::{
     board::TetrisBoard,
     pieces::{Kick, TetrisPiece, TetrisPieceRotation},
 };
+use rust_tetris_core::pieces::TetrisPieceType;
 
 pub struct TetrisPieceWithPosition {
     r: isize,
@@ -36,7 +37,7 @@ impl TetrisPieceWithPosition {
 
     pub fn finalize_on(&self, board: &mut TetrisBoard) {
         self.piece.call_on_set_cells(|i, j| {
-            board.set(i + self.row(), j + self.col(), self.piece.pieceType);
+            board.set(i + self.row(), j + self.col(), TetrisPieceType::Playable(self.piece.piece_type));
         });
     }
 

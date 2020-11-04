@@ -4,14 +4,11 @@
 
 #[macro_use]
 mod app;
-mod app_structs;
 mod controller;
-mod drawer;
-mod utils;
 
 use crate::app::App;
 use crate::controller::Controller;
-use crate::utils::{WIN_H, WIN_W};
+use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlyphCache, OpenGL, TextureSettings};
 use piston::{event_loop::EventLoop, window::WindowSettings};

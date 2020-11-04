@@ -1,4 +1,4 @@
-use crate::board::{TetrisBoard, TetrisCell, playable_piece_to_cell};
+use crate::board::{playable_piece_to_cell, TetrisBoard, TetrisCell};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayableTetrisPieceType {
@@ -241,8 +241,8 @@ impl TetrisPiece {
         };
 
         let kicks: &[Kick] = match self.piece_type {
-            TetrisPieceType::I => &I_KICKS[kick_index],
-            TetrisPieceType::O => &[(0, 0)],
+            PlayableTetrisPieceType::I => &I_KICKS[kick_index],
+            PlayableTetrisPieceType::O => &[(0, 0)],
             _ => &OTHER_KICKS[kick_index],
         };
 
@@ -345,34 +345,34 @@ impl TetrisPiece {
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod tests {
-    use super::{TetrisPiece, TetrisPieceRotation, TetrisPieceType};
+    use super::{PlayableTetrisPieceType, TetrisPiece, TetrisPieceRotation};
 
     #[test]
     fn test_get_piece_size() {
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::T);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::T);
 
         assert!(w == 3 && h == 3);
 
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::I);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::I);
 
         assert!(w == 4 && h == 4);
 
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::S);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::S);
 
         assert!(w == 3 && h == 3);
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::Z);
-
-        assert!(w == 3 && h == 3);
-
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::J);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::Z);
 
         assert!(w == 3 && h == 3);
 
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::L);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::J);
 
         assert!(w == 3 && h == 3);
 
-        let (w, h) = TetrisPiece::get_piece_size(TetrisPieceType::O);
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::L);
+
+        assert!(w == 3 && h == 3);
+
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::O);
 
         assert!(w == 3 && h == 4);
     }
