@@ -37,7 +37,7 @@ static I_KICKS: [[Kick; 5]; 8] = [
     [(0, 0), (1, 0), (-2, 0), (1, -2), (-2, 1)],
     [(0, 0), (-1, 0), (2, 0), (-1, 2), (2, -1)],
 ];
-static OTHER_KICKS: [[Kick; 5]; 8] = [
+static DEFAULT_KICKS: [[Kick; 5]; 8] = [
     [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
     [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
     [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
@@ -243,7 +243,7 @@ impl TetrisPiece {
         let kicks: &[Kick] = match self.piece_type {
             PlayableTetrisPieceType::I => &I_KICKS[kick_index],
             PlayableTetrisPieceType::O => &[(0, 0)],
-            _ => &OTHER_KICKS[kick_index],
+            _ => &DEFAULT_KICKS[kick_index],
         };
 
         kicks

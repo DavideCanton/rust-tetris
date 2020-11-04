@@ -5,11 +5,11 @@ authors = ["Davide Canton <davide.canton5@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-piston = "0.49.0"
-piston2d-graphics = "0.36.0"
-pistoncore-glutin_window = "0.63.0"
-piston2d-opengl_graphics = "0.72.0"
-piston_window = "0.107.0"
+piston = "0.52.0"
+piston2d-graphics = "0.37.0"
+pistoncore-glutin_window = "0.67.0"
+piston2d-opengl_graphics = "0.74.0"
+piston_window = "0.113.0"
 rand = "0.7.3"
 find_folder = "0.3.0"
 rust_tetris_core = { path = "../rust_tetris_core" }
