@@ -1,8 +1,7 @@
 use rust_tetris_core::{
     board::TetrisBoard,
-    pieces::{Kick, TetrisPiece, TetrisPieceRotation},
+    pieces::{Kick, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
 };
-use rust_tetris_core::pieces::TetrisPieceType;
 
 pub struct TetrisPieceWithPosition {
     r: isize,
@@ -37,7 +36,11 @@ impl TetrisPieceWithPosition {
 
     pub fn finalize_on(&self, board: &mut TetrisBoard) {
         self.piece.call_on_set_cells(|i, j| {
-            board.set(i + self.row(), j + self.col(), TetrisPieceType::Playable(self.piece.piece_type));
+            board.set(
+                i + self.row(),
+                j + self.col(),
+                TetrisPieceType::Playable(self.piece.piece_type),
+            );
         });
     }
 
@@ -78,11 +81,7 @@ impl TetrisPieceWithPosition {
         self.c += kick.0;
     }
 
-    pub fn can_rotate(
-        &self,
-        prev_rot: TetrisPieceRotation,
-        matrix: &TetrisBoard,
-    ) -> Option<Kick> {
+    pub fn can_rotate(&self, prev_rot: TetrisPieceRotation, matrix: &TetrisBoard) -> Option<Kick> {
         for kick in self.piece.get_kicks(prev_rot) {
             if !self.piece.collides_kick(self.r, self.c, matrix, kick) {
                 return Some(*kick);

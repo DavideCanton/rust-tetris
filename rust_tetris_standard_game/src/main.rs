@@ -8,11 +8,11 @@ mod controller;
 
 use crate::app::App;
 use crate::controller::Controller;
-use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlyphCache, OpenGL, TextureSettings};
 use piston::{event_loop::EventLoop, window::WindowSettings};
 use piston_window::{PistonWindow, Window};
+use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 
 fn configure<W: Window>(win: &mut PistonWindow<W>) {
     win.events.set_max_fps(60);

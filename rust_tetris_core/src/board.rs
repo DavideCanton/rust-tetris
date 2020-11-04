@@ -11,7 +11,7 @@ pub enum TetrisCell {
 pub fn is_filled(cell: TetrisCell) -> bool {
     match cell {
         TetrisCell::FilledCell(_) => true,
-        TetrisCell::EmptyCell => false
+        TetrisCell::EmptyCell => false,
     }
 }
 
@@ -77,9 +77,7 @@ impl TetrisBoard {
     pub fn is_empty(&self) -> bool {
         self.data
             .iter()
-            .all(|row|
-                row.iter().all(|&cell| !is_filled(cell))
-            )
+            .all(|row| row.iter().all(|&cell| !is_filled(cell)))
     }
 
     pub fn completed_rows(&mut self) -> Vec<(isize, isize)> {
@@ -116,11 +114,11 @@ impl TetrisBoard {
         }
     }
 
-    pub fn rows(&self) -> impl Iterator<Item=&Vec<TetrisCell>> {
+    pub fn rows(&self) -> impl Iterator<Item = &Vec<TetrisCell>> {
         self.data.iter()
     }
 
-    pub fn rows_mut(&mut self) -> impl Iterator<Item=&mut Vec<TetrisCell>> {
+    pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut Vec<TetrisCell>> {
         self.data.iter_mut()
     }
 
@@ -172,7 +170,7 @@ impl Debug for TetrisBoard {
             for j in 0..self.cols {
                 let c = match self.get(i, j) {
                     TetrisCell::FilledCell(_) => '*',
-                    TetrisCell::EmptyCell => ' '
+                    TetrisCell::EmptyCell => ' ',
                 };
                 write!(formatter, "{}", c)?
             }
@@ -198,7 +196,11 @@ mod tests {
             let i = i as isize;
             match ch {
                 ' ' => board.clear(i / c, i % c),
-                '*' => board.set(i / c, i % c, TetrisPieceType::Playable(PlayableTetrisPieceType::O)),
+                '*' => board.set(
+                    i / c,
+                    i % c,
+                    TetrisPieceType::Playable(PlayableTetrisPieceType::O),
+                ),
                 _ => panic!(),
             }
         }

@@ -6,20 +6,15 @@ use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
 use rust_tetris_core::{
     board::TetrisBoard,
-    pieces::{Kick, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
-};
-use rust_tetris_core::{
-    pieces::PlayableTetrisPieceType
+    pieces::{Kick, PlayableTetrisPieceType, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
 };
 use rust_tetris_ui_core::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     drawer::Drawer,
-    utils::{C, INITIAL_MOVE_DOWN_THRESHOLD, is_not_empty, R, SPED_UP_THRESHOLD},
+    utils::{is_not_empty, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
 };
 
-use crate::{
-    controller::{Controller, ControllerKey},
-};
+use crate::controller::{Controller, ControllerKey};
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
@@ -120,7 +115,8 @@ impl<'a> App<'a> {
         for r in rows {
             for c in r.chars() {
                 if c == '1' {
-                    self.board.set(row_index, col_index, TetrisPieceType::NotPlayable);
+                    self.board
+                        .set(row_index, col_index, TetrisPieceType::NotPlayable);
                 }
                 col_index += 1;
             }

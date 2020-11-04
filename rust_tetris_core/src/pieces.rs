@@ -191,7 +191,10 @@ impl TetrisPiece {
         false
     }
 
-    fn get_piece_matrix(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> TetrisBoard {
+    fn get_piece_matrix(
+        piece: PlayableTetrisPieceType,
+        rotation: TetrisPieceRotation,
+    ) -> TetrisBoard {
         let (r, c) = TetrisPiece::get_piece_size(piece);
 
         let mut matrix = TetrisBoard::new(r, c);
@@ -271,7 +274,10 @@ impl TetrisPiece {
         }
     }
 
-    fn get_rotations(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> &'static str {
+    fn get_rotations(
+        piece: PlayableTetrisPieceType,
+        rotation: TetrisPieceRotation,
+    ) -> &'static str {
         match piece {
             PlayableTetrisPieceType::O => TetrisPiece::get_rotations_o(),
             PlayableTetrisPieceType::I => TetrisPiece::get_rotations_i(rotation),

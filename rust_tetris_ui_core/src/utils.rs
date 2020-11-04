@@ -1,9 +1,6 @@
 use graphics::types::Color;
 
-use rust_tetris_core::{
-    pieces::{Kick, TetrisPieceType},
-};
-use rust_tetris_core::pieces::PlayableTetrisPieceType;
+use rust_tetris_core::pieces::{Kick, PlayableTetrisPieceType, TetrisPieceType};
 
 pub const R: isize = 20;
 pub const C: isize = 10;
@@ -51,7 +48,7 @@ fn apply_shadow(original_color: &Color, is_shadow: bool) -> Color {
 pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
     match p {
         TetrisPieceType::Playable(p) => playable_piece_to_color(p, is_shadow),
-        TetrisPieceType::NotPlayable => apply_shadow(&OTHER_COLOR, is_shadow)
+        TetrisPieceType::NotPlayable => apply_shadow(&OTHER_COLOR, is_shadow),
     }
 }
 
@@ -68,7 +65,6 @@ pub fn playable_piece_to_color(p: PlayableTetrisPieceType, is_shadow: bool) -> C
 
     apply_shadow(&original_color, is_shadow)
 }
-
 
 pub fn is_not_empty(kick: Kick) -> bool {
     kick.0 != 0 || kick.1 != 0

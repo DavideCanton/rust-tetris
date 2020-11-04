@@ -1,20 +1,18 @@
 use std::{cell::RefCell, ops::DerefMut, rc::Rc};
 
 use graphics::{
-    Context,
     math::Vec2d,
     types::{Color, FontSize},
+    Context,
 };
-use graphics::{Transformed, types::Scalar};
+use graphics::{types::Scalar, Transformed};
 use opengl_graphics::{GlGraphics, GlyphCache};
 
-use rust_tetris_core:: {
-    board::TetrisBoard,
+use rust_tetris_core::{
+    board::{TetrisBoard, TetrisCell},
     pieces::TetrisPiece,
     pieces::TetrisPieceType,
-
 };
-use rust_tetris_core::board::TetrisCell;
 
 use crate::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
