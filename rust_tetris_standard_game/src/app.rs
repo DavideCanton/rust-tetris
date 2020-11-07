@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use ggez::{graphics, graphics::Font, timer::delta, Context, GameResult};
+use log::debug;
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
 use rust_tetris_core::{
@@ -24,6 +25,7 @@ enum Moves {
     UP,
 }
 
+#[derive(Debug)]
 enum ScoreType {
     TSpinSingle,
     TSpinDouble,
@@ -158,7 +160,8 @@ impl App {
         }
 
         if let Some(pieceInfo) = self.hold_piece.as_ref() {
-            drawer.draw_hold_piece(pieceInfo)?;
+            let can_swap = HoldTetrisPiece::can_swap(&self.hold_piece);
+            drawer.draw_hold_piece(pieceInfo, can_swap)?;
         }
 
         if let Some(pieceInfo) = self.piece.as_ref() {
@@ -176,7 +179,6 @@ impl App {
     fn handle_finalize(&mut self) {
         let piece_with_position = self.piece.as_ref().unwrap();
         piece_with_position.finalize_on(&mut self.board);
-        let old_removed_rows = self.removed_rows;
 
         let completed_rows_ranges = self.board.completed_rows();
         let completed_rows = completed_rows_ranges
@@ -188,6 +190,7 @@ impl App {
         let last = self.last_score.take();
 
         if completed_rows == 4 {
+            debug!("Tetris detected");
             self.last_score = Some(ScoreType::Tetris);
         } else if piece_with_position.tetris_piece_ref().piece_type == PlayableTetrisPieceType::T {
             // detect T-spin
@@ -196,6 +199,8 @@ impl App {
                 let center_r = piece_with_position.row() + 1;
                 let center_c = piece_with_position.col() + 1;
                 let mut occupied = 0;
+
+                debug!("Maybe t-spin detected");
 
                 for i in &[-1, 1] {
                     for j in &[-1, 1] {
@@ -208,6 +213,8 @@ impl App {
                     }
                 }
 
+                debug!("{} corners occupied", occupied);
+
                 if occupied >= 3 {
                     self.last_score = match completed_rows {
                         1 => Some(ScoreType::TSpinSingle),
@@ -215,6 +222,8 @@ impl App {
                         3 => Some(ScoreType::TSpinTriple),
                         _ => None,
                     };
+
+                    debug!("Score computed: {:?}", self.last_score);
                 }
             }
         }
@@ -229,10 +238,6 @@ impl App {
         if self.board.is_empty() {
             self.back_to_back = false;
             self.last_score = Some(ScoreType::AllClear);
-        }
-
-        if old_removed_rows / 10 != self.removed_rows / 10 && self.current_threshold > 0.1 {
-            self.current_threshold -= 0.1;
         }
     }
 
@@ -285,8 +290,22 @@ impl App {
         Ok(TetrisUpdateResult::Continue)
     }
 
-    pub fn enter_key_pressed(&mut self) {
-        self.pause = !self.pause;
+    pub fn toggle_pause(&mut self) {
+        if self.is_paused() {
+            self.resume();
+        } else {
+            self.pause();
+        }
+    }
+
+    pub fn pause(&mut self) {
+        debug!("Pausing...");
+        self.pause = true;
+    }
+
+    pub fn resume(&mut self) {
+        debug!("Resuming...");
+        self.pause = false;
     }
 
     pub fn left_key_pressed(&mut self) {

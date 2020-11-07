@@ -40,7 +40,7 @@ impl<'a> Drawer<'a> {
                 BASE_X as Scalar + piece.col() as Scalar * WIDTH,
                 shadow_r as Scalar * WIDTH,
             ]);
-            self.draw_piece_struct(ps, piece.tetris_piece_ref(), true)
+            self.draw_piece_struct(ps, piece.tetris_piece_ref(), true, None)
         } else {
             Ok(())
         }
@@ -51,7 +51,7 @@ impl<'a> Drawer<'a> {
             BASE_X as Scalar + piece.col() as Scalar * WIDTH,
             piece.row() as Scalar * WIDTH,
         ]);
-        self.draw_piece_struct(pp, piece.tetris_piece_ref(), false)
+        self.draw_piece_struct(pp, piece.tetris_piece_ref(), false, None)
     }
 
     fn draw_piece_struct(
@@ -59,12 +59,13 @@ impl<'a> Drawer<'a> {
         base: Point2<Scalar>,
         piece: &TetrisPiece,
         is_shadow: bool,
+        override_color: Option<Color>
     ) -> GameResult {
         piece.call_on_set_cells_with_result(|i, j| {
             let i = i as Scalar;
             let j = j as Scalar;
             let pos = [j * WIDTH, i * WIDTH];
-            let color = playable_piece_to_color(piece.piece_type, is_shadow);
+            let color = override_color.unwrap_or(playable_piece_to_color(piece.piece_type, is_shadow));
             self.draw_square_by_pos(
                 Point2::from([base.x + pos[0], base.y + pos[1]]),
                 WIDTH,
@@ -73,9 +74,13 @@ impl<'a> Drawer<'a> {
         })
     }
 
-    pub fn draw_hold_piece(&mut self, piece: &HoldTetrisPiece) -> GameResult {
+    pub fn draw_hold_piece(&mut self, piece: &HoldTetrisPiece, can_swap: bool) -> GameResult {
         let pp = Point2::from([HOLD_X as Scalar, WIDTH]);
-        self.draw_piece_struct(pp, &piece.piece, false)
+        let color = match can_swap {
+            true => None,
+            false => Some(OTHER_COLOR)
+        };
+        self.draw_piece_struct(pp, &piece.piece, false, color)
     }
 
     pub fn draw_board(
@@ -175,7 +180,7 @@ impl<'a> Drawer<'a> {
         let i = index as Scalar;
         let offset = if i == 0.0 { 0.0 } else { 50.0 };
         let pos = Point2::from([BASE_X as Scalar + 355.0 + offset, i * WIDTH * 4.0 + 5.0]);
-        self.draw_piece_struct(pos, np, false)
+        self.draw_piece_struct(pos, np, false, None)
     }
 
     pub fn clear(&mut self) -> GameResult {

@@ -1,11 +1,13 @@
-use crate::types::TetrisUpdateResult;
 use ggez::{
+    event,
     event::{EventHandler, KeyCode},
     input::keyboard::KeyMods,
     Context, GameResult,
 };
+use log::trace;
 
 use crate::app::App;
+use crate::types::TetrisUpdateResult;
 
 #[derive(Debug)]
 pub enum ControllerKey {
@@ -17,6 +19,7 @@ pub enum ControllerKey {
     Down,
     Up,
     Hold,
+    Quit,
 }
 
 pub struct Controller {
@@ -42,6 +45,7 @@ impl Controller {
             KeyCode::Down => Some(ControllerKey::Down),
             KeyCode::Up => Some(ControllerKey::Up),
             KeyCode::C => Some(ControllerKey::Hold),
+            KeyCode::Escape => Some(ControllerKey::Quit),
             _ => None,
         }
     }
@@ -69,13 +73,14 @@ impl EventHandler for Controller {
 
     fn key_down_event(
         &mut self,
-        _ctx: &mut Context,
+        ctx: &mut Context,
         keycode: KeyCode,
         _keymods: KeyMods,
-        _repeat: bool,
+        repeat: bool,
     ) {
+        trace!("Key {:?} pressed, repeat: {}", keycode, repeat);
         match self.get_key(keycode) {
-            Some(ControllerKey::Return) => self.app.enter_key_pressed(),
+            Some(ControllerKey::Return) => self.app.toggle_pause(),
             Some(ControllerKey::Left) => self.exec_if_not_paused(|app| app.left_key_pressed()),
             Some(ControllerKey::Right) => self.exec_if_not_paused(|app| app.right_key_pressed()),
             Some(ControllerKey::NextRotation) => {
@@ -87,7 +92,18 @@ impl EventHandler for Controller {
             Some(ControllerKey::Down) => self.exec_if_not_paused(|app| app.down_key_pressed()),
             Some(ControllerKey::Up) => self.exec_if_not_paused(|app| app.up_key_pressed()),
             Some(ControllerKey::Hold) => self.exec_if_not_paused(|app| app.hold_key_pressed()),
+            Some(ControllerKey::Quit) => event::quit(ctx),
             _ => {}
+        }
+    }
+
+    fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
+        if gained {
+            if self.app.is_paused() {
+                self.app.resume();
+            }
+        } else {
+            self.app.pause();
         }
     }
 }

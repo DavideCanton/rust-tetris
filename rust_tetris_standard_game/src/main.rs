@@ -6,10 +6,11 @@ use std::default::Default;
 
 use ggez::{
     conf::{WindowMode, WindowSetup},
-    ContextBuilder,
     event::run,
     graphics::Font,
+    ContextBuilder,
 };
+use log::{debug, error, info, LevelFilter};
 
 use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 
@@ -21,6 +22,12 @@ mod controller;
 mod types;
 
 fn main() {
+    env_logger::builder()
+        .filter_level(LevelFilter::Trace)
+        // disable log flooding of gfx
+        .filter_module("gfx_device_gl", LevelFilter::Warn)
+        .init();
+
     let window_setup = WindowSetup::default().title("Rust Tetris").vsync(true);
 
     let window_mode = WindowMode::default()
@@ -34,7 +41,11 @@ fn main() {
         .build()
         .unwrap();
 
+    debug!("Created context");
+
     let font = Font::new(&mut ctx, "/fonts/FiraCode.ttf").unwrap();
+
+    debug!("Loaded font");
 
     let app = App::new(font);
     let mut controller = Controller::new(app);
@@ -42,7 +53,7 @@ fn main() {
     controller.start();
 
     match run(&mut ctx, &mut event_loop, &mut controller) {
-        Ok(_) => println!("Exited cleanly."),
-        Err(e) => println!("Error occured: {}", e),
+        Ok(_) => info!("Exited cleanly."),
+        Err(e) => error!("Error occured: {}", e),
     }
 }

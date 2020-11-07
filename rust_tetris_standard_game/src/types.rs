@@ -1,4 +1,4 @@
 pub enum TetrisUpdateResult {
     Continue,
-    GameOver
+    GameOver,
 }

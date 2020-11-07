@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
+log = "0.4.11"
 rust_tetris_core = { path = "../rust_tetris_core" }
