@@ -2,9 +2,8 @@
 <module type="RUST_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../rust_tetris_core">
-      <sourceFolder url="file://$MODULE_DIR$/../rust_tetris_core/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/../rust_tetris_core/target" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
