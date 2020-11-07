@@ -1,7 +1,7 @@
 # rust-tetris
 An implementation of the tetris game in Rust.
 
-Uses the [ggez](https://ggez.rs/) game engin.
+Uses the [ggez](https://ggez.rs/) game engine.
 
 Features implemented:
 
