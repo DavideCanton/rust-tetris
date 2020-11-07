@@ -1,6 +1,11 @@
-use glutin_window::GlutinWindow;
-use piston::input::*;
-use piston_window::{PistonWindow, Window};
+use crate::types::TetrisUpdateResult;
+use ggez::{
+    event::{EventHandler, KeyCode},
+    input::keyboard::KeyMods,
+    Context, GameResult,
+};
+
+use crate::app::App;
 
 #[derive(Debug)]
 pub enum ControllerKey {
@@ -15,33 +20,74 @@ pub enum ControllerKey {
 }
 
 pub struct Controller {
-    window: PistonWindow<GlutinWindow>,
+    app: App,
 }
 
 impl Controller {
-    pub fn new(window: PistonWindow<GlutinWindow>) -> Self {
-        Controller { window }
+    pub fn start(&mut self) {
+        self.app.start();
     }
 
-    pub fn get_key(&self, args: Button) -> Option<ControllerKey> {
-        match args {
-            Button::Keyboard(Key::Left) => Some(ControllerKey::Left),
-            Button::Keyboard(Key::Right) => Some(ControllerKey::Right),
-            Button::Keyboard(Key::X) => Some(ControllerKey::NextRotation),
-            Button::Keyboard(Key::Z) => Some(ControllerKey::PrevRotation),
-            Button::Keyboard(Key::Return) => Some(ControllerKey::Return),
-            Button::Keyboard(Key::Down) => Some(ControllerKey::Down),
-            Button::Keyboard(Key::Up) => Some(ControllerKey::Up),
-            Button::Keyboard(Key::Space) => Some(ControllerKey::Hold),
+    pub fn new(app: App) -> Self {
+        Controller { app }
+    }
+
+    pub fn get_key(&self, keycode: KeyCode) -> Option<ControllerKey> {
+        match keycode {
+            KeyCode::Left => Some(ControllerKey::Left),
+            KeyCode::Right => Some(ControllerKey::Right),
+            KeyCode::X => Some(ControllerKey::NextRotation),
+            KeyCode::Z => Some(ControllerKey::PrevRotation),
+            KeyCode::Return => Some(ControllerKey::Return),
+            KeyCode::Down => Some(ControllerKey::Down),
+            KeyCode::Up => Some(ControllerKey::Up),
+            KeyCode::C => Some(ControllerKey::Hold),
             _ => None,
         }
     }
 
-    pub fn close_window(&mut self) {
-        self.window.set_should_close(true);
+    fn exec_if_not_paused<F: FnMut(&mut App)>(&mut self, mut ex: F) {
+        if !self.app.is_paused() {
+            ex(&mut self.app);
+        }
+    }
+}
+
+impl EventHandler for Controller {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        match self.app.update(ctx) {
+            Ok(TetrisUpdateResult::GameOver) => {
+                panic!("Game over");
+            }
+            x => x.map(|_| ()),
+        }
     }
 
-    pub fn get_next_event(&mut self) -> Option<Event> {
-        self.window.next()
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        self.app.render(ctx)
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        match self.get_key(keycode) {
+            Some(ControllerKey::Return) => self.app.enter_key_pressed(),
+            Some(ControllerKey::Left) => self.exec_if_not_paused(|app| app.left_key_pressed()),
+            Some(ControllerKey::Right) => self.exec_if_not_paused(|app| app.right_key_pressed()),
+            Some(ControllerKey::NextRotation) => {
+                self.exec_if_not_paused(|app| app.next_rot_pressed())
+            }
+            Some(ControllerKey::PrevRotation) => {
+                self.exec_if_not_paused(|app| app.prev_rot_pressed())
+            }
+            Some(ControllerKey::Down) => self.exec_if_not_paused(|app| app.down_key_pressed()),
+            Some(ControllerKey::Up) => self.exec_if_not_paused(|app| app.up_key_pressed()),
+            Some(ControllerKey::Hold) => self.exec_if_not_paused(|app| app.hold_key_pressed()),
+            _ => {}
+        }
     }
 }

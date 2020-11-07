@@ -106,6 +106,22 @@ impl TetrisPiece {
         }
     }
 
+    pub fn call_on_set_cells_with_result<E, F: FnMut(isize, isize) -> Result<(), E>>(
+        &self,
+        mut f: F,
+    ) -> Result<(), E> {
+        let w = self.width();
+        let h = self.height();
+        for i in 0..h {
+            for j in 0..w {
+                if self.board.is_set(i, j) {
+                    f(i, j)?
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn collides_left(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
         let width = self.width();
         let height = self.height();

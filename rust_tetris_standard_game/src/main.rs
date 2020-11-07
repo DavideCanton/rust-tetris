@@ -2,41 +2,47 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
-use glutin_window::GlutinWindow;
-use opengl_graphics::{GlyphCache, OpenGL, TextureSettings};
-use piston::{event_loop::EventLoop, window::WindowSettings};
-use piston_window::{PistonWindow, Window};
+use std::default::Default;
+
+use ggez::{
+    conf::{WindowMode, WindowSetup},
+    ContextBuilder,
+    event::run,
+    graphics::Font,
+};
+
 use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 
-use crate::app::App;
-use crate::controller::Controller;
+use crate::{app::App, controller::Controller};
 
 #[macro_use]
 mod app;
 mod controller;
-
-fn configure<W: Window>(win: &mut PistonWindow<W>) {
-    win.events.set_max_fps(60);
-}
+mod types;
 
 fn main() {
-    let opengl = OpenGL::V3_2;
-    let mut window: PistonWindow<GlutinWindow> = WindowSettings::new("Tetris", [WIN_W, WIN_H])
-        .graphics_api(opengl)
-        .exit_on_esc(true)
+    let window_setup = WindowSetup::default().title("Rust Tetris").vsync(true);
+
+    let window_mode = WindowMode::default()
+        .dimensions(WIN_W, WIN_H)
+        .resizable(false);
+
+    // Make a Context and an EventLoop.
+    let (mut ctx, mut event_loop) = ContextBuilder::new("rust_tetris", "Davide Canton")
+        .window_setup(window_setup)
+        .window_mode(window_mode)
         .build()
-        .unwrap_or_else(|e| panic!("Failed to init OpenGL: {:?}", e));
-
-    let opengl_version = window.device.get_info().version;
-    println!("Using version: {:?}", opengl_version);
-    configure(&mut window);
-
-    let assets = find_folder::Search::ParentsThenKids(3, 3)
-        .for_folder("assets")
         .unwrap();
-    let font = &assets.join("FiraCode.ttf");
 
-    let glyphs = GlyphCache::new(font, (), TextureSettings::new()).unwrap();
+    let font = Font::new(&mut ctx, "/fonts/FiraCode.ttf").unwrap();
 
-    App::new(opengl, glyphs, Controller::new(window)).start();
+    let app = App::new(font);
+    let mut controller = Controller::new(app);
+
+    controller.start();
+
+    match run(&mut ctx, &mut event_loop, &mut controller) {
+        Ok(_) => println!("Exited cleanly."),
+        Err(e) => println!("Error occured: {}", e),
+    }
 }

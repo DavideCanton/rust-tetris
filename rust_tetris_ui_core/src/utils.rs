@@ -1,4 +1,4 @@
-use graphics::types::Color;
+use ggez::graphics::Color;
 
 use rust_tetris_core::pieces::{Kick, PlayableTetrisPieceType, TetrisPieceType};
 
@@ -7,22 +7,22 @@ pub const C: isize = 10;
 
 pub const INITIAL_MOVE_DOWN_THRESHOLD: f64 = 1.0;
 pub const SPED_UP_THRESHOLD: f64 = 0.05;
-pub const WIDTH: f64 = 30.0;
-pub const WIN_W: u32 = 800;
-pub const WIN_H: u32 = 600;
-pub const BASE_X: u32 = (WIN_W - (WIDTH as u32 * 10)) / 2;
-pub const HOLD_X: u32 = (BASE_X - (WIDTH as u32 * 3)) / 2;
+pub const WIDTH: f32 = 30.0;
+pub const WIN_W: f32 = 800.0;
+pub const WIN_H: f32 = 600.0;
+pub const BASE_X: f32 = (WIN_W - (WIDTH * 10.0f32)) / 2.0;
+pub const HOLD_X: f32 = (BASE_X - (WIDTH * 3.0f32)) / 2.0;
 
-pub const BLACK: Color = [0.0, 0.0, 0.0, 1.0];
-pub const WHITE: Color = [1.0, 1.0, 1.0, 1.0];
-pub const GRAY: Color = [0.6, 0.6, 0.6, 1.0];
-pub const YELLOW: Color = [1.0, 1.0, 0.0, 1.0];
-pub const RED: Color = [1.0, 0.0, 0.0, 1.0];
-pub const BLUE: Color = [0.0, 0.0, 1.0, 1.0];
-pub const LIGHTBLUE: Color = [0.0, 0.75, 1.0, 1.0];
-pub const GREEN: Color = [0.0, 1.0, 0.0, 1.0];
-pub const ORANGE: Color = [1.0, 0.6, 0.0, 1.0];
-pub const PURPLE: Color = [1.0, 0.0, 1.0, 1.0];
+pub const BLACK: Color = Color::new(0.0, 0.0, 0.0, 1.0);
+pub const WHITE: Color = Color::new(1.0, 1.0, 1.0, 1.0);
+pub const GRAY: Color = Color::new(0.6, 0.6, 0.6, 1.0);
+pub const YELLOW: Color = Color::new(1.0, 1.0, 0.0, 1.0);
+pub const RED: Color = Color::new(1.0, 0.0, 0.0, 1.0);
+pub const BLUE: Color = Color::new(0.0, 0.0, 1.0, 1.0);
+pub const LIGHTBLUE: Color = Color::new(0.0, 0.75, 1.0, 1.0);
+pub const GREEN: Color = Color::new(0.0, 1.0, 0.0, 1.0);
+pub const ORANGE: Color = Color::new(1.0, 0.6, 0.0, 1.0);
+pub const PURPLE: Color = Color::new(1.0, 0.0, 1.0, 1.0);
 
 pub const BGCOLOR: Color = BLACK;
 pub const O_COLOR: Color = YELLOW;
@@ -35,11 +35,10 @@ pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
 fn apply_shadow(original_color: &Color, is_shadow: bool) -> Color {
-    let mut color = [0.0; 4];
-    color.copy_from_slice(original_color);
+    let mut color = original_color.clone();
 
     if is_shadow {
-        color[3] = 0.3;
+        color.a = 0.3;
     }
 
     color

@@ -1,7 +1,6 @@
-use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+use std::collections::VecDeque;
 
-use opengl_graphics::{GlGraphics, GlyphCache, OpenGL};
-use piston::input::*;
+use ggez::{graphics, graphics::Font, timer::delta, Context, GameResult};
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
 use rust_tetris_core::{
@@ -14,7 +13,7 @@ use rust_tetris_ui_core::{
     utils::{is_not_empty, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
 };
 
-use crate::controller::{Controller, ControllerKey};
+use crate::types::TetrisUpdateResult;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Moves {
@@ -34,8 +33,7 @@ enum ScoreType {
     AllClear,
 }
 
-pub struct App<'a> {
-    gl: RefCell<GlGraphics>,
+pub struct App {
     board: TetrisBoard,
     piece: Option<TetrisPieceWithPosition>,
     pause: bool,
@@ -43,7 +41,6 @@ pub struct App<'a> {
     hold_piece: Option<HoldTetrisPiece>,
     rng: ThreadRng,
     time: f64,
-    controller: Controller,
     last_movement: f64,
     removed_rows: i32,
     current_threshold: f64,
@@ -53,15 +50,14 @@ pub struct App<'a> {
     last_move: Moves,
     last_score: Option<ScoreType>,
     back_to_back: bool,
-    glyphs: Rc<RefCell<GlyphCache<'a>>>,
+    font: Font,
     last_kick: Option<Kick>,
 }
 
-impl<'a> App<'a> {
-    pub fn new(opengl: OpenGL, glyphs: GlyphCache<'a>, controller: Controller) -> Self {
+impl App {
+    pub fn new(font: Font) -> Self {
         App {
-            gl: RefCell::new(GlGraphics::new(opengl)),
-            controller,
+            font,
             board: TetrisBoard::new(R, C),
             just_placed: false,
             pause: false,
@@ -77,7 +73,6 @@ impl<'a> App<'a> {
             internal_permutation: VecDeque::with_capacity(7),
             last_move: Moves::FALL,
             last_score: None,
-            glyphs: Rc::new(RefCell::new(glyphs)),
             back_to_back: false,
             last_kick: None,
         }
@@ -91,22 +86,6 @@ impl<'a> App<'a> {
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
         self.next_block();
-
-        while let Some(e) = self.controller.get_next_event() {
-            if let Some(r) = e.render_args() {
-                self.render(r);
-            }
-
-            if let Some(p) = e.press_args() {
-                self.process_keys(p);
-            }
-
-            if let Some(u) = e.update_args() {
-                if !self.pause {
-                    self.update(u);
-                }
-            }
-        }
     }
 
     fn initial_setup(&mut self, rows: &[&str], pieces: &[PlayableTetrisPieceType]) {
@@ -143,56 +122,55 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn render(&mut self, args: RenderArgs) {
-        self.gl.borrow_mut().draw(args.viewport(), |ctx, gl| {
-            let mut drawer = Drawer::new(gl, ctx, self.glyphs.clone());
+    pub fn render(&mut self, ctx: &mut Context) -> GameResult {
+        let mut drawer = Drawer::new(ctx, self.font);
 
-            drawer.clear();
-            drawer.draw_border();
+        drawer.clear()?;
+        drawer.draw_border()?;
 
-            for (index, np) in self.buffer_next_pieces.iter().rev().take(5).enumerate() {
-                drawer.draw_queue_piece(index, np);
+        for (index, np) in self.buffer_next_pieces.iter().rev().take(5).enumerate() {
+            drawer.draw_queue_piece(index, np)?;
+        }
+
+        let board = &self.board;
+        drawer.draw_board(0.0, 0.0, board)?;
+
+        if self.pause {
+            // draw pause
+            drawer.draw_pause()?;
+        }
+
+        if let Some(last_point) = self.last_score.as_ref() {
+            let msg = String::from(match last_point {
+                ScoreType::TSpinSingle => "T-Spin Singolo!",
+                ScoreType::TSpinDouble => "T-Spin Doppio!",
+                ScoreType::TSpinTriple => "T-Spin Triplo!",
+                ScoreType::TSpinMini => "T-Spin Mini!",
+                ScoreType::Tetris => "Tetris!",
+                ScoreType::AllClear => "All Clear!",
+            });
+
+            drawer.draw_score_text(&msg)?;
+
+            if self.back_to_back {
+                drawer.draw_b2b_text()?;
             }
+        }
 
-            let board = &self.board;
-            drawer.draw_board(0.0, 0.0, board);
+        if let Some(pieceInfo) = self.hold_piece.as_ref() {
+            drawer.draw_hold_piece(pieceInfo)?;
+        }
 
-            if self.pause {
-                // draw pause
-                drawer.draw_pause();
+        if let Some(pieceInfo) = self.piece.as_ref() {
+            // compute position for shadow
+            drawer.draw_piece_on_board(pieceInfo)?;
+
+            let shadow_r = self.get_shadow_row_index(&pieceInfo);
+            if let Some(shadow_r) = shadow_r {
+                drawer.try_draw_shadow(shadow_r, pieceInfo)?;
             }
-
-            if let Some(last_point) = self.last_score.as_ref() {
-                let msg = String::from(match last_point {
-                    ScoreType::TSpinSingle => "T-Spin Singolo!",
-                    ScoreType::TSpinDouble => "T-Spin Doppio!",
-                    ScoreType::TSpinTriple => "T-Spin Triplo!",
-                    ScoreType::TSpinMini => "T-Spin Mini!",
-                    ScoreType::Tetris => "Tetris!",
-                    ScoreType::AllClear => "All Clear!",
-                });
-
-                drawer.draw_score_text(&msg);
-
-                if self.back_to_back {
-                    drawer.draw_b2b_text();
-                }
-            }
-
-            if let Some(pieceInfo) = self.hold_piece.as_ref() {
-                drawer.draw_hold_piece(pieceInfo);
-            }
-
-            if let Some(pieceInfo) = self.piece.as_ref() {
-                // compute position for shadow
-                drawer.draw_piece_on_board(pieceInfo);
-
-                let shadow_r = self.get_shadow_row_index(&pieceInfo);
-                if let Some(shadow_r) = shadow_r {
-                    drawer.try_draw_shadow(shadow_r, pieceInfo);
-                }
-            }
-        });
+        }
+        graphics::present(ctx)
     }
 
     fn handle_finalize(&mut self) {
@@ -258,15 +236,27 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn update(&mut self, args: UpdateArgs) {
-        self.time += args.dt;
+    pub fn is_paused(&self) -> bool {
+        self.pause
+    }
 
+    pub fn update(&mut self, ctx: &mut Context) -> GameResult<TetrisUpdateResult> {
+        self.time += delta(ctx).as_secs_f64();
+
+        if !self.pause {
+            self.advance_frame()
+        } else {
+            Ok(TetrisUpdateResult::Continue)
+        }
+    }
+
+    fn advance_frame(&mut self) -> GameResult<TetrisUpdateResult> {
         if self.just_placed {
             let piece = self.piece.as_ref().unwrap();
 
             if piece.collides_on_next(&self.board) {
                 println!("Game over!");
-                self.controller.close_window();
+                return Ok(TetrisUpdateResult::GameOver);
             }
         }
 
@@ -292,27 +282,28 @@ impl<'a> App<'a> {
 
         self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
         self.old_threshold_sped_up = None;
+        Ok(TetrisUpdateResult::Continue)
     }
 
-    fn enter_key_pressed(&mut self) {
+    pub fn enter_key_pressed(&mut self) {
         self.pause = !self.pause;
     }
 
-    fn left_key_pressed(&mut self) {
+    pub fn left_key_pressed(&mut self) {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_left(&self.board) {
             self.last_move = Moves::SIDE;
         }
     }
 
-    fn right_key_pressed(&mut self) {
+    pub fn right_key_pressed(&mut self) {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_right(&self.board) {
             self.last_move = Moves::SIDE;
         }
     }
 
-    fn rot_pressed(&mut self, next: bool) {
+    pub fn rot_pressed(&mut self, next: bool) {
         let piece_with_pos = self.piece.as_mut().unwrap();
         let prev_rot: TetrisPieceRotation;
 
@@ -349,15 +340,15 @@ impl<'a> App<'a> {
         }
     }
 
-    fn next_rot_pressed(&mut self) {
+    pub fn next_rot_pressed(&mut self) {
         self.rot_pressed(true);
     }
 
-    fn prev_rot_pressed(&mut self) {
+    pub fn prev_rot_pressed(&mut self) {
         self.rot_pressed(false);
     }
 
-    fn up_key_pressed(&mut self) {
+    pub fn up_key_pressed(&mut self) {
         let piece = self.piece.as_mut().unwrap();
 
         while !piece.collides_on_next(&self.board) {
@@ -370,7 +361,7 @@ impl<'a> App<'a> {
         self.last_move = Moves::UP;
     }
 
-    fn hold_key_pressed(&mut self) {
+    pub fn hold_key_pressed(&mut self) {
         if HoldTetrisPiece::can_swap(&self.hold_piece) {
             let p = self.piece.take();
             let hp = self.hold_piece.take();
@@ -388,7 +379,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn down_key_pressed(&mut self) {
+    pub fn down_key_pressed(&mut self) {
         match self.old_threshold_sped_up {
             None => {
                 self.old_threshold_sped_up = Some(self.current_threshold);
@@ -396,26 +387,6 @@ impl<'a> App<'a> {
                 self.last_move = Moves::DOWN;
             }
             Some(_) => {}
-        }
-    }
-
-    fn exec_if_not_paused<F: Fn(&mut App<'a>)>(&mut self, ex: F) {
-        if !self.pause {
-            ex(self);
-        }
-    }
-
-    pub fn process_keys(&mut self, args: Button) {
-        match self.controller.get_key(args) {
-            Some(ControllerKey::Return) => self.enter_key_pressed(),
-            Some(ControllerKey::Left) => self.exec_if_not_paused(App::left_key_pressed),
-            Some(ControllerKey::Right) => self.exec_if_not_paused(App::right_key_pressed),
-            Some(ControllerKey::NextRotation) => self.exec_if_not_paused(App::next_rot_pressed),
-            Some(ControllerKey::PrevRotation) => self.exec_if_not_paused(App::prev_rot_pressed),
-            Some(ControllerKey::Down) => self.exec_if_not_paused(App::down_key_pressed),
-            Some(ControllerKey::Up) => self.exec_if_not_paused(App::up_key_pressed),
-            Some(ControllerKey::Hold) => self.exec_if_not_paused(App::hold_key_pressed),
-            _ => {}
         }
     }
 
