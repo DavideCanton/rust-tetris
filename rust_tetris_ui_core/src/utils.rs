@@ -7,11 +7,6 @@ use rust_tetris_core::{
 
 pub const R: isize = 20;
 pub const C: isize = 10;
-
-pub const GRAVITY: f64 = 0.016; // 1/60 cells per frame, @60fps it means 1 cell per second
-pub const SOFT_DROP_FACTOR: f64 = 40.0;
-pub const DAS: f64 = 10.0; // frames after starts autorepeat
-pub const ARR: f64 = 2.0; // frames per movement
 pub const WIDTH: f32 = 30.0;
 pub const WIN_W: f32 = 800.0;
 pub const WIN_H: f32 = 600.0;

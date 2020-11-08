@@ -3,31 +3,40 @@
 #![allow(non_camel_case_types)]
 
 use std::default::Default;
+use std::io::Read;
+use std::rc::Rc;
 
 use ggez::{
     conf::{WindowMode, WindowSetup},
-    event::run,
+    event::{run, EventsLoop},
     graphics::Font,
-    ContextBuilder,
+    Context, ContextBuilder,
 };
 use log::{debug, error, info, LevelFilter};
 
 use rust_tetris_ui_core::utils::{WIN_H, WIN_W};
 
-use crate::{app::App, controller::Controller};
+use crate::{
+    app::App,
+    conf::{GameConfig, Validable},
+    controller::Controller,
+};
 
 #[macro_use]
 mod app;
+mod conf;
 mod controller;
 mod types;
 
-fn main() {
+fn init_log() {
     env_logger::builder()
         .filter_level(LevelFilter::Trace)
         // disable log flooding of gfx
         .filter_module("gfx_device_gl", LevelFilter::Warn)
         .init();
+}
 
+fn init_ggez() -> (Context, EventsLoop) {
     let window_setup = WindowSetup::default().title("Rust Tetris").vsync(true);
 
     let window_mode = WindowMode::default()
@@ -35,20 +44,38 @@ fn main() {
         .resizable(false);
 
     // Make a Context and an EventLoop.
-    let (mut ctx, mut event_loop) = ContextBuilder::new("rust_tetris", "Davide Canton")
+    ContextBuilder::new("rust_tetris", "Davide Canton")
         .window_setup(window_setup)
         .window_mode(window_mode)
         .build()
-        .unwrap();
+        .unwrap()
+}
 
+fn main() {
+    init_log();
+
+    let (mut ctx, mut event_loop) = init_ggez();
     debug!("Created context");
 
     let font = Font::new(&mut ctx, "/fonts/FiraCode.ttf").unwrap();
 
     debug!("Loaded font");
 
-    let app = App::new(font);
-    let mut controller = Controller::new(app);
+    let conf_str = ggez::filesystem::open(&mut ctx, "/conf/game_conf.toml")
+        .and_then(|mut f| {
+            let mut s = String::new();
+            f.read_to_string(&mut s)?;
+            Ok(s)
+        })
+        .unwrap();
+    let config: GameConfig = toml::from_str(&conf_str).expect("Conf load error");
+    config.validate();
+    println!("{:?}", config);
+
+    let rc_config = Rc::new(config);
+
+    let app = App::new(font, Rc::clone(&rc_config));
+    let mut controller = Controller::new(app, Rc::clone(&rc_config));
 
     controller.start();
 

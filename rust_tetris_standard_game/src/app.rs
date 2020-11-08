@@ -1,4 +1,6 @@
+use crate::GameConfig;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 use ggez::{graphics, graphics::Font, timer::delta, Context, GameResult};
 use log::debug;
@@ -10,7 +12,6 @@ use rust_tetris_core::{
     enums::{PlayableTetrisPieceType, TetrisPieceRotation, TetrisPieceType},
     pieces::TetrisPiece,
 };
-use rust_tetris_ui_core::utils::{ARR, DAS, GRAVITY, SOFT_DROP_FACTOR};
 use rust_tetris_ui_core::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     drawer::Drawer,
@@ -64,10 +65,12 @@ pub struct App {
     font: Font,
     last_kick: Option<Kick>,
     side_move_to_perform: Option<SideMoves>,
+    config: Rc<GameConfig>,
 }
 
 impl App {
-    pub fn new(font: Font) -> Self {
+    pub fn new(font: Font, config: Rc<GameConfig>) -> Self {
+        let current_gravity = config.game_params.gravity;
         App {
             font,
             board: TetrisBoard::new(R, C),
@@ -77,9 +80,10 @@ impl App {
             hold_piece: None,
             rng: thread_rng(),
             removed_rows: 0,
+            config,
             down_movement_accumulator: 0.0,
             side_movement_accumulator: 0.0,
-            current_gravity: GRAVITY,
+            current_gravity,
             buffer_next_pieces: VecDeque::with_capacity(5),
             internal_permutation: VecDeque::with_capacity(7),
             last_move: Moves::FALL,
@@ -286,7 +290,7 @@ impl App {
     }
 
     fn apply_side_move(&mut self) {
-        let can_das = (self.frames_for_das as f64) >= DAS;
+        let can_das = (self.frames_for_das as f64) >= self.config.game_params.das;
         let can_single_move = !can_das && self.frames_for_das == 0;
         let sign: i32 = match self.side_move_to_perform {
             Some(SideMoves::LEFT) => -1,
@@ -301,7 +305,7 @@ impl App {
             if can_single_move {
                 self.side_move_signed(sign);
             } else if can_das {
-                self.side_movement_accumulator += (sign as f64) / ARR;
+                self.side_movement_accumulator += (sign as f64) / self.config.game_params.arr;
 
                 let mut abs = self.side_movement_accumulator.abs();
                 let sign = self.side_movement_accumulator.signum();
@@ -357,7 +361,7 @@ impl App {
     }
 
     fn reset_drop(&mut self) {
-        self.current_gravity = GRAVITY;
+        self.current_gravity = self.config.game_params.gravity;
     }
 
     pub fn toggle_pause(&mut self) {
@@ -458,7 +462,7 @@ impl App {
         self.rot_pressed(false);
     }
 
-    pub fn up_key_pressed(&mut self) {
+    pub fn hard_drop_key_pressed(&mut self) {
         let piece = self.piece.as_mut().unwrap();
 
         while !piece.collides_on_next(&self.board) {
@@ -489,12 +493,12 @@ impl App {
         }
     }
 
-    pub fn down_key_pressed(&mut self) {
-        self.current_gravity = GRAVITY * SOFT_DROP_FACTOR;
+    pub fn soft_drop_key_pressed(&mut self) {
+        self.current_gravity = self.config.game_params.gravity * self.config.game_params.soft_drop_factor;
         self.last_move = Moves::DOWN;
     }
 
-    pub fn down_key_released(&mut self) {
+    pub fn soft_drop_key_released(&mut self) {
         self.reset_drop();
     }
 

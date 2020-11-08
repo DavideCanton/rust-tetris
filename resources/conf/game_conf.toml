@@ -1,0 +1,16 @@
+[game_params]
+gravity = 0.016
+soft_drop_factor = 40.0
+das = 10.0
+arr = 2.0
+
+[keys]
+left = { keyboard = "Left" }
+right = { keyboard = "Right" }
+next_rotation = { keyboard = "X" }
+prev_rotation = { keyboard = "Z" }
+pause = { keyboard = "Return" }
+soft_drop = { keyboard = "Down" }
+hard_drop = { keyboard = "Up" }
+hold = { keyboard = "C" }
+quit = { keyboard = "Escape" }

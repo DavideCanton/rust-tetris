@@ -1,4 +1,7 @@
+use crate::conf::KeyConfig;
+use crate::GameConfig;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use ggez::{
     event,
@@ -16,32 +19,68 @@ pub enum ControllerKey {
     Right,
     NextRotation,
     PrevRotation,
-    Return,
-    Down,
-    Up,
+    Pause,
+    SoftDrop,
+    HardDrop,
     Hold,
     Quit,
 }
 
 pub struct Controller {
     app: App,
-    user_to_input: HashMap<KeyCode, ControllerKey>,
+    config: Rc<GameConfig>,
+    keys_map: HashMap<KeyCode, ControllerKey>,
+}
+
+fn read_key(c: ControllerKey, k: &KeyConfig, map: &mut HashMap<KeyCode, ControllerKey>) {
+    match k.keyboard {
+        Some(k) => {
+            map.insert(k, c);
+        }
+        None => (),
+    }
+}
+
+fn create_keys_map(config: &Rc<GameConfig>) -> HashMap<KeyCode, ControllerKey> {
+    let mut keys_map = HashMap::new();
+
+    read_key(ControllerKey::Left, &config.keys.left, &mut keys_map);
+    read_key(ControllerKey::Right, &config.keys.right, &mut keys_map);
+    read_key(
+        ControllerKey::NextRotation,
+        &config.keys.next_rotation,
+        &mut keys_map,
+    );
+    read_key(
+        ControllerKey::PrevRotation,
+        &config.keys.prev_rotation,
+        &mut keys_map,
+    );
+    read_key(ControllerKey::Pause, &config.keys.pause, &mut keys_map);
+    read_key(
+        ControllerKey::SoftDrop,
+        &config.keys.soft_drop,
+        &mut keys_map,
+    );
+    read_key(
+        ControllerKey::HardDrop,
+        &config.keys.hard_drop,
+        &mut keys_map,
+    );
+    read_key(ControllerKey::Hold, &config.keys.hold, &mut keys_map);
+    read_key(ControllerKey::Quit, &config.keys.quit, &mut keys_map);
+
+    keys_map
 }
 
 impl Controller {
-    pub fn new(app: App) -> Self {
-        let mut user_to_input = HashMap::new();
-        user_to_input.insert(KeyCode::Left, ControllerKey::Left);
-        user_to_input.insert(KeyCode::Right, ControllerKey::Right);
-        user_to_input.insert(KeyCode::X, ControllerKey::NextRotation);
-        user_to_input.insert(KeyCode::Z, ControllerKey::PrevRotation);
-        user_to_input.insert(KeyCode::Return, ControllerKey::Return);
-        user_to_input.insert(KeyCode::Down, ControllerKey::Down);
-        user_to_input.insert(KeyCode::Up, ControllerKey::Up);
-        user_to_input.insert(KeyCode::C, ControllerKey::Hold);
-        user_to_input.insert(KeyCode::Escape, ControllerKey::Quit);
-
-        Controller { app, user_to_input }
+    pub fn new(app: App, config: Rc<GameConfig>) -> Self {
+        let keys_map = create_keys_map(&config);
+        Controller {
+            app,
+            config,
+            keys_map,
+        }
     }
 
     pub fn start(&mut self) {
@@ -54,9 +93,17 @@ impl Controller {
         }
     }
 
+    fn decode_key(&self, keycode: &KeyCode) -> Option<&ControllerKey> {
+        self.keys_map.get(keycode)
+    }
+
+    fn decode_gamepad(&self, _keycode: &KeyCode) -> Option<&ControllerKey> {
+        todo!()
+    }
+
     fn handle_key(&mut self, ctx: &mut Context, keycode: KeyCode) {
-        match self.user_to_input.get(&keycode) {
-            Some(ControllerKey::Return) => self.app.toggle_pause(),
+        match self.decode_key(&keycode) {
+            Some(ControllerKey::Pause) => self.app.toggle_pause(),
             Some(ControllerKey::Left) => self.exec_if_not_paused(|app| app.left_key_pressed()),
             Some(ControllerKey::Right) => self.exec_if_not_paused(|app| app.right_key_pressed()),
             Some(ControllerKey::NextRotation) => {
@@ -65,8 +112,12 @@ impl Controller {
             Some(ControllerKey::PrevRotation) => {
                 self.exec_if_not_paused(|app| app.prev_rot_pressed())
             }
-            Some(ControllerKey::Down) => self.exec_if_not_paused(|app| app.down_key_pressed()),
-            Some(ControllerKey::Up) => self.exec_if_not_paused(|app| app.up_key_pressed()),
+            Some(ControllerKey::SoftDrop) => {
+                self.exec_if_not_paused(|app| app.soft_drop_key_pressed())
+            }
+            Some(ControllerKey::HardDrop) => {
+                self.exec_if_not_paused(|app| app.hard_drop_key_pressed())
+            }
             Some(ControllerKey::Hold) => self.exec_if_not_paused(|app| app.hold_key_pressed()),
             Some(ControllerKey::Quit) => event::quit(ctx),
             _ => {}
@@ -99,10 +150,10 @@ impl EventHandler for Controller {
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
-        match self.user_to_input.get(&keycode) {
+        match self.decode_key(&keycode) {
             Some(ControllerKey::Left) => self.app.left_key_released(),
             Some(ControllerKey::Right) => self.app.right_key_released(),
-            Some(ControllerKey::Down) => self.app.down_key_released(),
+            Some(ControllerKey::SoftDrop) => self.app.soft_drop_key_released(),
             _ => {}
         }
     }
