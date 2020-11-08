@@ -1,6 +1,9 @@
 use ggez::graphics::Color;
 
-use rust_tetris_core::pieces::{Kick, PlayableTetrisPieceType, TetrisPieceType};
+use rust_tetris_core::{
+    constants::Kick,
+    enums::{PlayableTetrisPieceType, TetrisPieceType},
+};
 
 pub const R: isize = 20;
 pub const C: isize = 10;
@@ -74,8 +77,7 @@ pub fn is_not_empty(kick: Kick) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::*;
-    use rust_tetris_core::pieces::PlayableTetrisPieceType;
+    use super::*;    
 
     #[test]
     fn test_is_not_empty() {

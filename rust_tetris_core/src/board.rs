@@ -1,6 +1,5 @@
+use crate::enums::{PlayableTetrisPieceType, TetrisPieceType};
 use std::fmt::{Debug, Formatter, Result};
-
-use crate::pieces::{PlayableTetrisPieceType, TetrisPieceType};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TetrisCell {
@@ -184,10 +183,7 @@ impl Debug for TetrisBoard {
 
 #[cfg(test)]
 mod tests {
-    use crate::pieces::{PlayableTetrisPieceType, TetrisPieceType};
-
-    use super::is_filled;
-    use super::TetrisBoard;
+    use super::*;
 
     fn load_board(board: &mut TetrisBoard, s: &str) {
         let c = board.cols;

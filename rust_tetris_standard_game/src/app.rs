@@ -6,7 +6,9 @@ use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
 use rust_tetris_core::{
     board::TetrisBoard,
-    pieces::{Kick, PlayableTetrisPieceType, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
+    constants::Kick,
+    enums::{PlayableTetrisPieceType, TetrisPieceRotation, TetrisPieceType},
+    pieces::TetrisPiece,
 };
 use rust_tetris_ui_core::utils::{ARR, DAS, GRAVITY, SOFT_DROP_FACTOR};
 use rust_tetris_ui_core::{

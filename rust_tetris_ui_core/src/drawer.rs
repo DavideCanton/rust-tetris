@@ -7,8 +7,8 @@ use ggez::{
 
 use rust_tetris_core::{
     board::{TetrisBoard, TetrisCell},
+    enums::TetrisPieceType,
     pieces::TetrisPiece,
-    pieces::TetrisPieceType,
 };
 
 use crate::{

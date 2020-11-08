@@ -1,6 +1,8 @@
 use rust_tetris_core::{
     board::TetrisBoard,
-    pieces::{Kick, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
+    constants::Kick,
+    enums::{TetrisPieceRotation, TetrisPieceType},
+    pieces::TetrisPiece,
 };
 
 pub struct TetrisPieceWithPosition {
