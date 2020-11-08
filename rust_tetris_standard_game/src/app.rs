@@ -8,10 +8,11 @@ use rust_tetris_core::{
     board::TetrisBoard,
     pieces::{Kick, PlayableTetrisPieceType, TetrisPiece, TetrisPieceRotation, TetrisPieceType},
 };
+use rust_tetris_ui_core::utils::{ARR, DAS, GRAVITY, SOFT_DROP_FACTOR};
 use rust_tetris_ui_core::{
     app_structs::{HoldTetrisPiece, TetrisPieceWithPosition},
     drawer::Drawer,
-    utils::{is_not_empty, C, INITIAL_MOVE_DOWN_THRESHOLD, R, SPED_UP_THRESHOLD},
+    utils::{is_not_empty, C, R},
 };
 
 use crate::types::TetrisUpdateResult;
@@ -23,6 +24,12 @@ enum Moves {
     SIDE,
     DOWN,
     UP,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+enum SideMoves {
+    LEFT,
+    RIGHT,
 }
 
 #[derive(Debug)]
@@ -42,18 +49,19 @@ pub struct App {
     just_placed: bool,
     hold_piece: Option<HoldTetrisPiece>,
     rng: ThreadRng,
-    time: f64,
-    last_movement: f64,
+    down_movement_accumulator: f64,
+    side_movement_accumulator: f64,
     removed_rows: i32,
-    current_threshold: f64,
-    old_threshold_sped_up: Option<f64>,
+    frames_for_das: i32,
+    current_gravity: f64,
     buffer_next_pieces: VecDeque<TetrisPiece>,
     internal_permutation: VecDeque<PlayableTetrisPieceType>,
     last_move: Moves,
     last_score: Option<ScoreType>,
-    back_to_back: bool,
+    back_to_back: u32,
     font: Font,
     last_kick: Option<Kick>,
+    side_move_to_perform: Option<SideMoves>,
 }
 
 impl App {
@@ -66,17 +74,18 @@ impl App {
             piece: None,
             hold_piece: None,
             rng: thread_rng(),
-            time: 0.0,
             removed_rows: 0,
-            last_movement: 0.0,
-            current_threshold: INITIAL_MOVE_DOWN_THRESHOLD,
-            old_threshold_sped_up: None,
+            down_movement_accumulator: 0.0,
+            side_movement_accumulator: 0.0,
+            current_gravity: GRAVITY,
             buffer_next_pieces: VecDeque::with_capacity(5),
             internal_permutation: VecDeque::with_capacity(7),
             last_move: Moves::FALL,
             last_score: None,
-            back_to_back: false,
+            back_to_back: 0,
+            frames_for_das: 0,
             last_kick: None,
+            side_move_to_perform: None,
         }
     }
 
@@ -154,8 +163,8 @@ impl App {
 
             drawer.draw_score_text(&msg)?;
 
-            if self.back_to_back {
-                drawer.draw_b2b_text()?;
+            if self.back_to_back > 0 {
+                drawer.draw_b2b_text(self.back_to_back)?;
             }
         }
 
@@ -228,15 +237,18 @@ impl App {
             }
         }
 
-        if completed_rows > 0 {
-            // TODO check this
-            self.back_to_back = last.is_some() && self.last_score.is_some();
+        let is_b2b = completed_rows > 0 && last.is_some() && self.last_score.is_some();
+
+        if is_b2b {
+            self.back_to_back += 1;
+        } else {
+            self.back_to_back = 0;
         }
 
         self.board.remove_ranges(completed_rows_ranges, Some(20));
 
         if self.board.is_empty() {
-            self.back_to_back = false;
+            self.back_to_back = 0;
             self.last_score = Some(ScoreType::AllClear);
         }
     }
@@ -246,16 +258,16 @@ impl App {
     }
 
     pub fn update(&mut self, ctx: &mut Context) -> GameResult<TetrisUpdateResult> {
-        self.time += delta(ctx).as_secs_f64();
+        let delta = delta(ctx).as_secs_f64();
 
         if !self.pause {
-            self.advance_frame()
+            self.advance_frame(delta)
         } else {
             Ok(TetrisUpdateResult::Continue)
         }
     }
 
-    fn advance_frame(&mut self) -> GameResult<TetrisUpdateResult> {
+    fn advance_frame(&mut self, _dt: f64) -> GameResult<TetrisUpdateResult> {
         if self.just_placed {
             let piece = self.piece.as_ref().unwrap();
 
@@ -265,29 +277,85 @@ impl App {
             }
         }
 
-        if self.time - self.last_movement >= self.current_threshold {
+        self.apply_side_move();
+        self.apply_gravity();
+
+        Ok(TetrisUpdateResult::Continue)
+    }
+
+    fn apply_side_move(&mut self) {
+        let can_das = (self.frames_for_das as f64) >= DAS;
+        let can_single_move = !can_das && self.frames_for_das == 0;
+        let sign: i32 = match self.side_move_to_perform {
+            Some(SideMoves::LEFT) => -1,
+            Some(SideMoves::RIGHT) => 1,
+            _ => 0,
+        };
+
+        if sign == 0 {
+            self.side_movement_accumulator = 0.0;
+        } else {
+            self.frames_for_das += 1;
+            if can_single_move {
+                self.side_move_signed(sign);
+            } else if can_das {
+                self.side_movement_accumulator += (sign as f64) / ARR;
+
+                let mut abs = self.side_movement_accumulator.abs();
+                let sign = self.side_movement_accumulator.signum();
+
+                if abs >= 1.0 {
+                    loop {
+                        self.side_move_signed(sign);
+
+                        abs -= 1.0;
+                        if abs < 1.0 {
+                            break;
+                        }
+                    }
+                }
+
+                self.side_movement_accumulator = abs * sign;
+            }
+        }
+    }
+
+    fn side_move_signed<T: Into<f64>>(&mut self, sign: T) {
+        if sign.into() > 0.0 {
+            self.move_right();
+        } else {
+            self.move_left();
+        }
+    }
+
+    fn apply_gravity(&mut self) {
+        self.down_movement_accumulator += self.current_gravity;
+        if self.down_movement_accumulator >= 1.0 {
             let mut next_block = false;
             self.just_placed = false;
 
             let piece = self.piece.as_mut().unwrap();
 
-            if piece.collides_on_next(&self.board) {
-                next_block = true;
-            } else {
-                piece.move_down();
-                self.last_move = Moves::FALL;
-                self.last_movement = self.time;
+            while self.down_movement_accumulator >= 1.0 {
+                if piece.collides_on_next(&self.board) {
+                    next_block = true;
+                } else {
+                    piece.move_down();
+                    self.last_move = Moves::FALL;
+                }
+                self.down_movement_accumulator -= 1.0;
             }
 
             if next_block {
                 self.handle_finalize();
                 self.next_block();
+                self.down_movement_accumulator = 0.0;
             }
         }
+    }
 
-        self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
-        self.old_threshold_sped_up = None;
-        Ok(TetrisUpdateResult::Continue)
+    fn reset_drop(&mut self) {
+        self.current_gravity = GRAVITY;
     }
 
     pub fn toggle_pause(&mut self) {
@@ -308,18 +376,39 @@ impl App {
         self.pause = false;
     }
 
-    pub fn left_key_pressed(&mut self) {
+    pub fn move_left(&mut self) {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_left(&self.board) {
             self.last_move = Moves::SIDE;
         }
     }
 
-    pub fn right_key_pressed(&mut self) {
+    pub fn move_right(&mut self) {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_right(&self.board) {
             self.last_move = Moves::SIDE;
         }
+    }
+
+    pub fn left_key_pressed(&mut self) {
+        self.side_move_to_perform = Some(SideMoves::LEFT);
+    }
+
+    pub fn right_key_pressed(&mut self) {
+        self.side_move_to_perform = Some(SideMoves::RIGHT);
+    }
+
+    pub fn left_key_released(&mut self) {
+        self.reset_side_key_pressed();
+    }
+
+    pub fn right_key_released(&mut self) {
+        self.reset_side_key_pressed();
+    }
+
+    fn reset_side_key_pressed(&mut self) {
+        self.side_move_to_perform = None;
+        self.frames_for_das = 0;
     }
 
     pub fn rot_pressed(&mut self, next: bool) {
@@ -399,14 +488,12 @@ impl App {
     }
 
     pub fn down_key_pressed(&mut self) {
-        match self.old_threshold_sped_up {
-            None => {
-                self.old_threshold_sped_up = Some(self.current_threshold);
-                self.current_threshold = SPED_UP_THRESHOLD;
-                self.last_move = Moves::DOWN;
-            }
-            Some(_) => {}
-        }
+        self.current_gravity = GRAVITY * SOFT_DROP_FACTOR;
+        self.last_move = Moves::DOWN;
+    }
+
+    pub fn down_key_released(&mut self) {
+        self.reset_drop();
     }
 
     fn new_block_in_buffer(&mut self) {
@@ -446,8 +533,7 @@ impl App {
         let piece = self.buffer_next_pieces.pop_back().unwrap();
         self.piece = Some(App::build_piece_with_pos(piece));
         self.new_block_in_buffer();
-        self.current_threshold = self.old_threshold_sped_up.unwrap_or(self.current_threshold);
-        self.old_threshold_sped_up = None;
+        self.reset_drop();
         self.just_placed = true;
         if let Some(hold_piece) = self.hold_piece.as_mut() {
             hold_piece.reset_hold();

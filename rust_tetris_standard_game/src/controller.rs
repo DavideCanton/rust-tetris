@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 use ggez::{
     event,
     event::{EventHandler, KeyCode},
     input::keyboard::KeyMods,
     Context, GameResult,
 };
-use log::trace;
 
 use crate::app::App;
 use crate::types::TetrisUpdateResult;
@@ -24,30 +25,27 @@ pub enum ControllerKey {
 
 pub struct Controller {
     app: App,
+    user_to_input: HashMap<KeyCode, ControllerKey>,
 }
 
 impl Controller {
+    pub fn new(app: App) -> Self {
+        let mut user_to_input = HashMap::new();
+        user_to_input.insert(KeyCode::Left, ControllerKey::Left);
+        user_to_input.insert(KeyCode::Right, ControllerKey::Right);
+        user_to_input.insert(KeyCode::X, ControllerKey::NextRotation);
+        user_to_input.insert(KeyCode::Z, ControllerKey::PrevRotation);
+        user_to_input.insert(KeyCode::Return, ControllerKey::Return);
+        user_to_input.insert(KeyCode::Down, ControllerKey::Down);
+        user_to_input.insert(KeyCode::Up, ControllerKey::Up);
+        user_to_input.insert(KeyCode::C, ControllerKey::Hold);
+        user_to_input.insert(KeyCode::Escape, ControllerKey::Quit);
+
+        Controller { app, user_to_input }
+    }
+
     pub fn start(&mut self) {
         self.app.start();
-    }
-
-    pub fn new(app: App) -> Self {
-        Controller { app }
-    }
-
-    pub fn get_key(&self, keycode: KeyCode) -> Option<ControllerKey> {
-        match keycode {
-            KeyCode::Left => Some(ControllerKey::Left),
-            KeyCode::Right => Some(ControllerKey::Right),
-            KeyCode::X => Some(ControllerKey::NextRotation),
-            KeyCode::Z => Some(ControllerKey::PrevRotation),
-            KeyCode::Return => Some(ControllerKey::Return),
-            KeyCode::Down => Some(ControllerKey::Down),
-            KeyCode::Up => Some(ControllerKey::Up),
-            KeyCode::C => Some(ControllerKey::Hold),
-            KeyCode::Escape => Some(ControllerKey::Quit),
-            _ => None,
-        }
     }
 
     fn exec_if_not_paused<F: FnMut(&mut App)>(&mut self, mut ex: F) {
@@ -55,31 +53,9 @@ impl Controller {
             ex(&mut self.app);
         }
     }
-}
 
-impl EventHandler for Controller {
-    fn update(&mut self, ctx: &mut Context) -> GameResult {
-        match self.app.update(ctx) {
-            Ok(TetrisUpdateResult::GameOver) => {
-                panic!("Game over");
-            }
-            x => x.map(|_| ()),
-        }
-    }
-
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        self.app.render(ctx)
-    }
-
-    fn key_down_event(
-        &mut self,
-        ctx: &mut Context,
-        keycode: KeyCode,
-        _keymods: KeyMods,
-        repeat: bool,
-    ) {
-        trace!("Key {:?} pressed, repeat: {}", keycode, repeat);
-        match self.get_key(keycode) {
+    fn handle_key(&mut self, ctx: &mut Context, keycode: KeyCode) {
+        match self.user_to_input.get(&keycode) {
             Some(ControllerKey::Return) => self.app.toggle_pause(),
             Some(ControllerKey::Left) => self.exec_if_not_paused(|app| app.left_key_pressed()),
             Some(ControllerKey::Right) => self.exec_if_not_paused(|app| app.right_key_pressed()),
@@ -93,6 +69,40 @@ impl EventHandler for Controller {
             Some(ControllerKey::Up) => self.exec_if_not_paused(|app| app.up_key_pressed()),
             Some(ControllerKey::Hold) => self.exec_if_not_paused(|app| app.hold_key_pressed()),
             Some(ControllerKey::Quit) => event::quit(ctx),
+            _ => {}
+        }
+    }
+}
+
+impl EventHandler for Controller {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
+        match self.app.update(ctx) {
+            Ok(TetrisUpdateResult::GameOver) => {
+                panic!("Game over");
+            }
+            other => other.map(|_| ()),
+        }
+    }
+
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        self.app.render(ctx)
+    }
+
+    fn key_down_event(
+        &mut self,
+        ctx: &mut Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        self.handle_key(ctx, keycode);
+    }
+
+    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
+        match self.user_to_input.get(&keycode) {
+            Some(ControllerKey::Left) => self.app.left_key_released(),
+            Some(ControllerKey::Right) => self.app.right_key_released(),
+            Some(ControllerKey::Down) => self.app.down_key_released(),
             _ => {}
         }
     }

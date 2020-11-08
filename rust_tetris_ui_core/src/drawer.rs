@@ -59,13 +59,14 @@ impl<'a> Drawer<'a> {
         base: Point2<Scalar>,
         piece: &TetrisPiece,
         is_shadow: bool,
-        override_color: Option<Color>
+        override_color: Option<Color>,
     ) -> GameResult {
         piece.call_on_set_cells_with_result(|i, j| {
             let i = i as Scalar;
             let j = j as Scalar;
             let pos = [j * WIDTH, i * WIDTH];
-            let color = override_color.unwrap_or(playable_piece_to_color(piece.piece_type, is_shadow));
+            let color =
+                override_color.unwrap_or(playable_piece_to_color(piece.piece_type, is_shadow));
             self.draw_square_by_pos(
                 Point2::from([base.x + pos[0], base.y + pos[1]]),
                 WIDTH,
@@ -78,7 +79,7 @@ impl<'a> Drawer<'a> {
         let pp = Point2::from([HOLD_X as Scalar, WIDTH]);
         let color = match can_swap {
             true => None,
-            false => Some(OTHER_COLOR)
+            false => Some(OTHER_COLOR),
         };
         self.draw_piece_struct(pp, &piece.piece, false, color)
     }
@@ -144,9 +145,14 @@ impl<'a> Drawer<'a> {
         self.draw_text(RED, SCORE_SIZE, text, pp)
     }
 
-    pub fn draw_b2b_text(&mut self) -> GameResult {
+    pub fn draw_b2b_text(&mut self, current_b2b: u32) -> GameResult {
         let pp = Point2::from([HOLD_X as Scalar, (WIN_H as Scalar) - WIDTH * 2.0]);
-        self.draw_text(RED, SCORE_SIZE, "Back to back!", pp)
+        self.draw_text(
+            RED,
+            SCORE_SIZE,
+            &format!("Back to back: {}x", current_b2b),
+            pp,
+        )
     }
 
     fn draw_text(
