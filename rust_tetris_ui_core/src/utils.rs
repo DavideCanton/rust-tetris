@@ -36,8 +36,8 @@ pub const L_COLOR: Color = ORANGE;
 pub const J_COLOR: Color = BLUE;
 pub const OTHER_COLOR: Color = GRAY;
 
-fn apply_shadow(original_color: &Color, is_shadow: bool) -> Color {
-    let mut color = original_color.clone();
+fn apply_shadow(original_color: Color, is_shadow: bool) -> Color {
+    let mut color = original_color;
 
     if is_shadow {
         color.a = 0.3;
@@ -49,7 +49,7 @@ fn apply_shadow(original_color: &Color, is_shadow: bool) -> Color {
 pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
     match p {
         TetrisPieceType::Playable(p) => playable_piece_to_color(p, is_shadow),
-        TetrisPieceType::NotPlayable => apply_shadow(&OTHER_COLOR, is_shadow),
+        TetrisPieceType::NotPlayable => apply_shadow(OTHER_COLOR, is_shadow),
     }
 }
 
@@ -64,7 +64,7 @@ pub fn playable_piece_to_color(p: PlayableTetrisPieceType, is_shadow: bool) -> C
         PlayableTetrisPieceType::J => J_COLOR,
     };
 
-    apply_shadow(&original_color, is_shadow)
+    apply_shadow(original_color, is_shadow)
 }
 
 pub fn is_not_empty(kick: Kick) -> bool {

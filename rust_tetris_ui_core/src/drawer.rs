@@ -65,8 +65,8 @@ impl<'a> Drawer<'a> {
             let i = i as Scalar;
             let j = j as Scalar;
             let pos = [j * WIDTH, i * WIDTH];
-            let color =
-                override_color.unwrap_or(playable_piece_to_color(piece.piece_type, is_shadow));
+            let color = override_color
+                .unwrap_or_else(|| playable_piece_to_color(piece.piece_type, is_shadow));
             self.draw_square_by_pos(
                 Point2::from([base.x + pos[0], base.y + pos[1]]),
                 WIDTH,
@@ -163,7 +163,7 @@ impl<'a> Drawer<'a> {
         pos: Point2<Scalar>,
     ) -> GameResult {
         let mut text = Text::new(text);
-        text.set_font(self.font.clone(), Scale::uniform(size));
+        text.set_font(self.font, Scale::uniform(size));
         graphics::draw(self.ctx, &text, DrawParam::default().dest(pos).color(color))
     }
 

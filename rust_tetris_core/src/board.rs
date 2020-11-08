@@ -16,11 +16,11 @@ pub fn is_filled(cell: TetrisCell) -> bool {
 }
 
 pub fn playable_piece_to_cell(piece: PlayableTetrisPieceType) -> TetrisCell {
-    return TetrisCell::FilledCell(TetrisPieceType::Playable(piece));
+    TetrisCell::FilledCell(TetrisPieceType::Playable(piece))
 }
 
 pub fn not_playable_piece_to_cell() -> TetrisCell {
-    return TetrisCell::FilledCell(TetrisPieceType::NotPlayable);
+    TetrisCell::FilledCell(TetrisPieceType::NotPlayable)
 }
 
 pub struct TetrisBoard {
