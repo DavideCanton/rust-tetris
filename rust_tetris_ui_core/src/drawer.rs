@@ -61,7 +61,7 @@ impl<'a> Drawer<'a> {
         is_shadow: bool,
         override_color: Option<Color>,
     ) -> GameResult {
-        piece.call_on_set_cells_with_result(|i, j| {
+        for (i, j) in piece.set_cells() {
             let i = i as Scalar;
             let j = j as Scalar;
             let pos = [j * WIDTH, i * WIDTH];
@@ -71,8 +71,9 @@ impl<'a> Drawer<'a> {
                 Point2::from([base.x + pos[0], base.y + pos[1]]),
                 WIDTH,
                 color,
-            )
-        })
+            )?
+        }
+        Ok(())
     }
 
     pub fn draw_hold_piece(&mut self, piece: &HoldTetrisPiece, can_swap: bool) -> GameResult {

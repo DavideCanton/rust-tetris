@@ -106,7 +106,11 @@ mod tests {
 
         for (piece, expected_color) in pairs {
             let color = playable_piece_to_color(piece, false);
-            assert_eq!(color, expected_color, "For piece {:?} color should be {:?}, got {:?}", piece, expected_color, color);
+            assert_eq!(
+                color, expected_color,
+                "For piece {:?} color should be {:?}, got {:?}",
+                piece, expected_color, color
+            );
         }
     }
 
@@ -128,7 +132,11 @@ mod tests {
 
         for (piece, expected_color) in pairs {
             let color = playable_piece_to_color(piece, true);
-            assert_eq!(color, expected_color, "For piece {:?} color should be {:?}, got {:?}", piece, expected_color, color);
+            assert_eq!(
+                color, expected_color,
+                "For piece {:?} color should be {:?}, got {:?}",
+                piece, expected_color, color
+            );
         }
     }
 
@@ -147,11 +155,22 @@ mod tests {
         for (piece, expected_color) in pairs {
             let piece_type = TetrisPieceType::Playable(piece);
             let color = piece_to_color(piece_type, false);
-            assert_eq!(color, expected_color, "For piece {:?} color should be {:?}, got {:?}", piece_type, expected_color, color);
+            assert_eq!(
+                color, expected_color,
+                "For piece {:?} color should be {:?}, got {:?}",
+                piece_type, expected_color, color
+            );
         }
 
         let color = piece_to_color(TetrisPieceType::NotPlayable, false);
-        assert_eq!(color, OTHER_COLOR, "For piece {:?} color should be {:?}, got {:?}", TetrisPieceType::NotPlayable, OTHER_COLOR, color);
+        assert_eq!(
+            color,
+            OTHER_COLOR,
+            "For piece {:?} color should be {:?}, got {:?}",
+            TetrisPieceType::NotPlayable,
+            OTHER_COLOR,
+            color
+        );
     }
 
     #[test]
@@ -173,12 +192,23 @@ mod tests {
         for (piece, expected_color) in pairs {
             let piece_type = TetrisPieceType::Playable(piece);
             let color = piece_to_color(piece_type, true);
-            assert_eq!(color, expected_color, "For piece {:?} color should be {:?}, got {:?}", piece_type, expected_color, color);
+            assert_eq!(
+                color, expected_color,
+                "For piece {:?} color should be {:?}, got {:?}",
+                piece_type, expected_color, color
+            );
         }
 
         let color = piece_to_color(TetrisPieceType::NotPlayable, true);
         let mut expected_color = OTHER_COLOR.clone();
         expected_color.a = GHOST_ALPHA;
-        assert_eq!(color, expected_color, "For piece {:?} color should be {:?}, got {:?}", TetrisPieceType::NotPlayable, expected_color, color);
+        assert_eq!(
+            color,
+            expected_color,
+            "For piece {:?} color should be {:?}, got {:?}",
+            TetrisPieceType::NotPlayable,
+            expected_color,
+            color
+        );
     }
 }

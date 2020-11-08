@@ -94,32 +94,15 @@ impl TetrisPiece {
         self.board.rows
     }
 
-    pub fn call_on_set_cells<F: FnMut(isize, isize)>(&self, mut f: F) {
+    pub fn set_cells(&self) -> Box<dyn Iterator<Item = (isize, isize)> + '_> {
         let w = self.width();
         let h = self.height();
-        for i in 0..h {
-            for j in 0..w {
-                if self.board.is_set(i, j) {
-                    f(i, j);
-                }
-            }
-        }
-    }
 
-    pub fn call_on_set_cells_with_result<E, F: FnMut(isize, isize) -> Result<(), E>>(
-        &self,
-        mut f: F,
-    ) -> Result<(), E> {
-        let w = self.width();
-        let h = self.height();
-        for i in 0..h {
-            for j in 0..w {
-                if self.board.is_set(i, j) {
-                    f(i, j)?
-                }
-            }
-        }
-        Ok(())
+        let iter = (0..h)
+            .flat_map(move |i| (0..w).map(move |j| (i, j)))
+            .filter(move |&(i, j)| self.board.is_set(i, j));
+
+        Box::new(iter)
     }
 
     pub fn collides_left(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
@@ -372,30 +355,24 @@ mod tests {
     #[test]
     fn test_get_piece_size() {
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::T);
-
         assert!(w == 3 && h == 3);
 
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::I);
-
         assert!(w == 4 && h == 4);
 
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::S);
-
         assert!(w == 3 && h == 3);
-        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::Z);
 
+        let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::Z);
         assert!(w == 3 && h == 3);
 
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::J);
-
         assert!(w == 3 && h == 3);
 
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::L);
-
         assert!(w == 3 && h == 3);
 
         let (w, h) = TetrisPiece::get_piece_size(PlayableTetrisPieceType::O);
-
         assert!(w == 3 && h == 4);
     }
 
@@ -435,5 +412,21 @@ mod tests {
         rotation = TetrisPiece::prev_rotation(rotation);
 
         assert_eq!(rotation, TetrisPieceRotation::ZERO);
+    }
+
+    #[test]
+    fn test_set_cells_T() {
+        let t = TetrisPiece::new(PlayableTetrisPieceType::T);
+        let cells: Vec<_> = t.set_cells().collect();
+
+        assert_eq!(cells, vec![(0, 1), (1, 0), (1, 1), (1, 2)]);
+    }
+
+    #[test]
+    fn test_set_cells_I() {
+        let t = TetrisPiece::new(PlayableTetrisPieceType::I);
+        let cells: Vec<_> = t.set_cells().collect();
+
+        assert_eq!(cells, vec![(1, 0), (1, 1), (1, 2), (1, 3)]);
     }
 }

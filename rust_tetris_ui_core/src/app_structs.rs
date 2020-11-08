@@ -35,13 +35,13 @@ impl TetrisPieceWithPosition {
     }
 
     pub fn finalize_on(&self, board: &mut TetrisBoard) {
-        self.piece.call_on_set_cells(|i, j| {
+        for (i, j) in self.piece.set_cells() {
             board.set(
                 i + self.row(),
                 j + self.col(),
                 TetrisPieceType::Playable(self.piece.piece_type),
             );
-        });
+        }
     }
 
     pub fn collides_on_next(&self, matrix: &TetrisBoard) -> bool {
