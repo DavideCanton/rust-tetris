@@ -1,2 +1,2 @@
-call build.bat
+call scripts\build.bat
 cargo run
