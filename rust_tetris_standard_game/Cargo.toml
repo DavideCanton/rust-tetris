@@ -7,11 +7,14 @@ edition = "2018"
 [dependencies]
 ggez = "0.5.1"
 rand = "0.7.3"
-log = "0.4.11"
+log = { version = "0.4.11", features = [
+    "max_level_trace",
+    "release_max_level_warn"
+] }
 env_logger = "0.8.1"
 serde = "1.0.117"
 serde_derive = "1.0.117"
 toml = "0.5.7"
 rust_tetris_core = { path = "../rust_tetris_core" }
 rust_tetris_ui_core = { path = "../rust_tetris_ui_core" }
-winit = {version = "0.19", features = ["serde"]}
+winit = { version = "0.19", features = ["serde"] }

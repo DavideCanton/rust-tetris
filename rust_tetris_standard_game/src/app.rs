@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 
 use ggez::{graphics, graphics::Font, timer::delta, Context, GameResult};
-use log::debug;
+use log::{debug, trace};
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
 use rust_tetris_core::{
@@ -54,7 +54,6 @@ pub struct App {
     rng: ThreadRng,
     down_movement_accumulator: f64,
     side_movement_accumulator: f64,
-    removed_rows: i32,
     frames_for_das: i32,
     current_gravity: f64,
     buffer_next_pieces: VecDeque<TetrisPiece>,
@@ -62,6 +61,7 @@ pub struct App {
     last_move: Moves,
     last_score: Option<ScoreType>,
     back_to_back: u32,
+    current_combo: u32,
     font: Font,
     last_kick: Option<Kick>,
     side_move_to_perform: Option<SideMoves>,
@@ -79,11 +79,11 @@ impl App {
             piece: None,
             hold_piece: None,
             rng: thread_rng(),
-            removed_rows: 0,
             config,
             down_movement_accumulator: 0.0,
             side_movement_accumulator: 0.0,
             current_gravity,
+            current_combo: 0,
             buffer_next_pieces: VecDeque::with_capacity(5),
             internal_permutation: VecDeque::with_capacity(7),
             last_move: Moves::FALL,
@@ -97,26 +97,8 @@ impl App {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = [
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-            "0111111111",
-        ];
-        let pieces = [
-            PlayableTetrisPieceType::I,
-            PlayableTetrisPieceType::I,
-            PlayableTetrisPieceType::I,
-            PlayableTetrisPieceType::I,
-        ];
+        let rows = [];
+        let pieces = [];
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
@@ -186,10 +168,14 @@ impl App {
             });
 
             drawer.draw_score_text(&msg)?;
+        }
 
-            if self.back_to_back > 0 {
-                drawer.draw_b2b_text(self.back_to_back)?;
-            }
+        if self.back_to_back > 0 {
+            drawer.draw_b2b_text(self.back_to_back)?;
+        }
+
+        if self.current_combo > 1 {
+            drawer.draw_combo(self.current_combo - 1)?;
         }
 
         if let Some(pieceInfo) = self.hold_piece.as_ref() {
@@ -219,7 +205,12 @@ impl App {
             .map(|r| (r.0 - r.1) as i32)
             .sum();
 
-        self.removed_rows += completed_rows;
+        if completed_rows == 0 {
+            self.current_combo = 0;
+        } else {
+            self.current_combo += 1;
+        }
+
         let last = self.last_score.take();
 
         if completed_rows == 4 {
@@ -262,7 +253,7 @@ impl App {
         }
 
         let is_b2b = completed_rows > 0 && last.is_some() && self.last_score.is_some();
-        debug!("B2B detected? {}", is_b2b);
+        trace!("B2B detected? {}", is_b2b);
 
         if is_b2b {
             self.back_to_back += 1;
@@ -270,7 +261,9 @@ impl App {
             self.back_to_back = 0;
         }
 
-        debug!("B2B level: {}", self.back_to_back);
+        if self.back_to_back > 0 {
+            debug!("B2B level: {}", self.back_to_back);
+        }
 
         self.board.remove_ranges(completed_rows_ranges, Some(20));
 
@@ -515,7 +508,8 @@ impl App {
     }
 
     pub fn soft_drop_key_pressed(&mut self) {
-        self.current_gravity = self.config.game_params.gravity * self.config.game_params.soft_drop_factor;
+        self.current_gravity =
+            self.config.game_params.gravity * self.config.game_params.soft_drop_factor;
         self.last_move = Moves::DOWN;
     }
 

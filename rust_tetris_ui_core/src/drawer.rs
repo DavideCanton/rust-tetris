@@ -137,8 +137,13 @@ impl<'a> Drawer<'a> {
     }
 
     pub fn draw_b2b_text(&mut self, current_b2b: u32) -> GameResult {
-        let pp = [TEXT_X as Scalar, (WIN_H as Scalar) - WIDTH * 2.0];
+        let pp = [TEXT_X as Scalar, (WIN_H as Scalar) - WIDTH];
         self.draw_text(RED, SCORE_SIZE, &format!("B2B: {}x", current_b2b), pp)
+    }
+
+    pub fn draw_combo(&mut self, current_combo: u32) -> GameResult {
+        let pp = [TEXT_X as Scalar, (WIN_H as Scalar) - WIDTH * 2.0];
+        self.draw_text(RED, SCORE_SIZE, &format!("Combo: {}", current_combo), pp)
     }
 
     fn draw_text(&mut self, color: Color, size: f32, text: &str, pos: [Scalar; 2]) -> GameResult {

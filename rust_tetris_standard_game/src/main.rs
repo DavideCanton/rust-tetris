@@ -30,6 +30,7 @@ mod types;
 
 fn init_log() {
     env_logger::builder()
+        // set level to trace, let log! configuration from Cargo.toml to guide
         .filter_level(LevelFilter::Trace)
         // disable log flooding of gfx
         .filter_module("gfx_device_gl", LevelFilter::Warn)
@@ -70,7 +71,6 @@ fn main() {
         .unwrap();
     let config: GameConfig = toml::from_str(&conf_str).expect("Conf load error");
     config.validate();
-    
     debug!("Config: {:?}", config);
 
     let rc_config = Rc::new(config);
