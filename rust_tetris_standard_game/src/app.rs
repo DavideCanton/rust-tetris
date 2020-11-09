@@ -97,8 +97,26 @@ impl App {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = [];
-        let pieces = [];
+        let rows = [
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+            "0111111111",
+        ];
+        let pieces = [
+            PlayableTetrisPieceType::I,
+            PlayableTetrisPieceType::I,
+            PlayableTetrisPieceType::I,
+            PlayableTetrisPieceType::I,
+        ];
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
@@ -244,12 +262,15 @@ impl App {
         }
 
         let is_b2b = completed_rows > 0 && last.is_some() && self.last_score.is_some();
+        debug!("B2B detected? {}", is_b2b);
 
         if is_b2b {
             self.back_to_back += 1;
         } else {
             self.back_to_back = 0;
         }
+
+        debug!("B2B level: {}", self.back_to_back);
 
         self.board.remove_ranges(completed_rows_ranges, Some(20));
 

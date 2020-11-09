@@ -12,6 +12,7 @@ pub const WIN_W: f32 = 800.0;
 pub const WIN_H: f32 = 600.0;
 pub const BASE_X: f32 = (WIN_W - (WIDTH * 10.0f32)) / 2.0;
 pub const HOLD_X: f32 = (BASE_X - (WIDTH * 3.0f32)) / 2.0;
+pub const TEXT_X: f32 = BASE_X / 3.0;
 pub const GHOST_ALPHA: f32 = 0.3;
 
 pub const BLACK: Color = Color::new(0.0, 0.0, 0.0, 1.0);
