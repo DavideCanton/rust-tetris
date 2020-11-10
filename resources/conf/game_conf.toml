@@ -3,6 +3,7 @@ gravity = 0.016
 soft_drop_factor = 40.0
 das = 10.0
 arr = 2.0
+lock_delay = 30
 
 [keys]
 left = { keyboard = "Left" }

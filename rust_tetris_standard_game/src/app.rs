@@ -60,6 +60,7 @@ pub struct App {
     internal_permutation: VecDeque<PlayableTetrisPieceType>,
     last_move: Moves,
     last_score: Option<ScoreType>,
+    lock_timer: u32,
     back_to_back: u32,
     current_combo: u32,
     font: Font,
@@ -90,6 +91,7 @@ impl App {
             last_score: None,
             back_to_back: 0,
             frames_for_das: 0,
+            lock_timer: 0,
             last_kick: None,
             side_move_to_perform: None,
         }
@@ -288,15 +290,22 @@ impl App {
     }
 
     fn advance_frame(&mut self, _dt: f64) -> GameResult<TetrisUpdateResult> {
-        if self.just_placed {
-            let piece = self.piece.as_ref().unwrap();
+        let piece = self.piece.as_ref().unwrap();
+        let grounded = piece.collides_on_next(&self.board);
 
-            if piece.collides_on_next(&self.board) {
+        if self.just_placed {
+            if grounded {
                 println!("Game over!");
                 return Ok(TetrisUpdateResult::GameOver);
             }
         }
+        self.just_placed = false;
 
+        if grounded {
+            self.lock_timer += 1;
+        }
+
+        // TODO
         self.apply_side_move();
         self.apply_gravity();
 
@@ -350,6 +359,7 @@ impl App {
 
     fn apply_gravity(&mut self) {
         self.down_movement_accumulator += self.current_gravity;
+
         if self.down_movement_accumulator >= 1.0 {
             let mut next_block = false;
             self.just_placed = false;
@@ -358,7 +368,7 @@ impl App {
 
             while self.down_movement_accumulator >= 1.0 {
                 if piece.collides_on_next(&self.board) {
-                    next_block = true;
+                    self.lock_timer += 1;
                 } else {
                     piece.move_down();
                     self.last_move = Moves::FALL;

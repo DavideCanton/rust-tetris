@@ -25,6 +25,7 @@ pub struct GameParamsConfig {
     pub soft_drop_factor: f64,
     pub das: f64,
     pub arr: f64,
+    pub lock_delay: u32
 }
 
 impl Validable for GameParamsConfig {
