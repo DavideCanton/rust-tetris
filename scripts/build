@@ -1,2 +1,10 @@
-cargo build
-cp -R ./resources/ ./target/debug/
+#!/bin/sh
+if [ -z "$1" ] || [ "$1" = "debug" ]
+then
+    arg=""
+    folder="debug"
+else
+    arg="--$1"
+    folder=$1
+fi
+cargo build $arg && cp -R ./resources/ "./target/$folder/"
