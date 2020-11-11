@@ -65,8 +65,8 @@ pub struct App {
     current_combo: u32,
     font: Font,
     last_kick: Option<Kick>,
-    side_move_to_perform: Option<SideMoves>,
     config: Rc<GameConfig>,
+    side_move_to_perform: Option<SideMoves>,
 }
 
 impl App {
@@ -290,8 +290,12 @@ impl App {
     }
 
     fn advance_frame(&mut self, _dt: f64) -> GameResult<TetrisUpdateResult> {
+        trace!("Advancing frame...");
         let piece = self.piece.as_ref().unwrap();
         let grounded = piece.collides_on_next(&self.board);
+        let mut put_next_block = false;
+
+        trace!("Grounded? {}", grounded);
 
         if self.just_placed {
             if grounded {
@@ -302,12 +306,32 @@ impl App {
         self.just_placed = false;
 
         if grounded {
-            self.lock_timer += 1;
+            trace!("Lock timer = {}", self.lock_timer);
+            if self.lock_timer == self.config.game_params.lock_delay {
+                trace!("Reached limit of {}", self.config.game_params.lock_delay);
+                self.handle_finalize();
+                self.next_block();
+                self.down_movement_accumulator = 0.0;
+                put_next_block = true;
+            } else {
+                trace!("Limit not reached, increasing lock timer");
+                self.lock_timer += 1;
+            }
+        } else {
+            trace!("Not grounded, resetting lock timer");
+            self.lock_timer = 0;
         }
 
-        // TODO
         self.apply_side_move();
-        self.apply_gravity();
+        if self.last_move == Moves::SIDE {
+            trace!("Moved to the side, resetting lock timer");
+            self.lock_timer = 0;
+        }
+
+        if !put_next_block && !grounded {
+            trace!("Applying gravity...");
+            self.apply_gravity();
+        }
 
         Ok(TetrisUpdateResult::Continue)
     }
@@ -361,25 +385,14 @@ impl App {
         self.down_movement_accumulator += self.current_gravity;
 
         if self.down_movement_accumulator >= 1.0 {
-            let mut next_block = false;
-            self.just_placed = false;
-
             let piece = self.piece.as_mut().unwrap();
 
             while self.down_movement_accumulator >= 1.0 {
-                if piece.collides_on_next(&self.board) {
-                    self.lock_timer += 1;
-                } else {
+                if !piece.collides_on_next(&self.board) {
                     piece.move_down();
                     self.last_move = Moves::FALL;
                 }
                 self.down_movement_accumulator -= 1.0;
-            }
-
-            if next_block {
-                self.handle_finalize();
-                self.next_block();
-                self.down_movement_accumulator = 0.0;
             }
         }
     }
