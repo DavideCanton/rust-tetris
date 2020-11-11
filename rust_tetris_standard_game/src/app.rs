@@ -2,7 +2,7 @@ use crate::GameConfig;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use ggez::{graphics, graphics::Font, timer::delta, Context, GameResult};
+use ggez::{graphics, graphics::Font, timer, Context, GameResult};
 use log::{debug, trace};
 use rand::{prelude::ThreadRng, seq::SliceRandom, thread_rng};
 
@@ -99,8 +99,8 @@ impl App {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = ["0000001100", "0000001100", "0000000110", "0000001100"];
-        let pieces = [PlayableTetrisPieceType::J, PlayableTetrisPieceType::T];
+        let rows = [];
+        let pieces = [];
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
@@ -110,9 +110,9 @@ impl App {
     fn initial_setup(&mut self, rows: &[&str], pieces: &[PlayableTetrisPieceType]) {
         let mut row_index = R - 1;
         let mut col_index = 0;
-        for r in rows {
+        for r in rows.iter().rev() {
             for c in r.chars() {
-                if c == '1' {
+                if c != ' ' {
                     self.board
                         .set(row_index, col_index, TetrisPieceType::NotPlayable);
                 }
@@ -280,7 +280,9 @@ impl App {
     }
 
     pub fn update(&mut self, ctx: &mut Context) -> GameResult<TetrisUpdateResult> {
-        let delta = delta(ctx).as_secs_f64();
+        graphics::set_window_title(ctx, &format!("Rust Tetris @ {:.2}fps", timer::fps(ctx)));
+
+        let delta = timer::delta(ctx).as_secs_f64();
 
         if !self.pause {
             self.advance_frame(delta)

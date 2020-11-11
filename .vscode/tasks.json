@@ -4,7 +4,11 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "${workspaceFolder}/scripts/build",
+            "command": "powershell",
+            "args": [
+                "${workspaceFolder}/scripts/build.ps1",
+                "debug"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -14,7 +18,32 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "${workspaceFolder}/scripts/run",
+            "command": "powershell",
+            "args": [
+                "${workspaceFolder}/scripts/run.ps1",
+                "debug"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Release",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "${workspaceFolder}/scripts/build.ps1",
+                "release"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run release",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "${workspaceFolder}/scripts/run.ps1",
+                "release"
+            ],
             "problemMatcher": []
         },
         {
