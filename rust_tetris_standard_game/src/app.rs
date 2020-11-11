@@ -99,8 +99,8 @@ impl App {
 
     pub fn start(&mut self) {
         // initial setup
-        let rows = [];
-        let pieces = [];
+        let rows = ["0000001100", "0000001100", "0000000110", "0000001100"];
+        let pieces = [PlayableTetrisPieceType::J, PlayableTetrisPieceType::T];
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
@@ -290,12 +290,9 @@ impl App {
     }
 
     fn advance_frame(&mut self, _dt: f64) -> GameResult<TetrisUpdateResult> {
-        trace!("Advancing frame...");
         let piece = self.piece.as_ref().unwrap();
         let grounded = piece.collides_on_next(&self.board);
         let mut put_next_block = false;
-
-        trace!("Grounded? {}", grounded);
 
         if self.just_placed {
             if grounded {
@@ -322,8 +319,7 @@ impl App {
             self.lock_timer = 0;
         }
 
-        self.apply_side_move();
-        if self.last_move == Moves::SIDE {
+        if self.apply_side_move() {
             trace!("Moved to the side, resetting lock timer");
             self.lock_timer = 0;
         }
@@ -336,7 +332,7 @@ impl App {
         Ok(TetrisUpdateResult::Continue)
     }
 
-    fn apply_side_move(&mut self) {
+    fn apply_side_move(&mut self) -> bool {
         let can_das = (self.frames_for_das as f64) >= self.config.game_params.das;
         let can_single_move = !can_das && self.frames_for_das == 0;
         let sign: i32 = match self.side_move_to_perform {
@@ -344,22 +340,25 @@ impl App {
             Some(SideMoves::RIGHT) => 1,
             _ => 0,
         };
+        let mut moved = false;
 
         if sign == 0 {
             self.side_movement_accumulator = 0.0;
         } else {
             self.frames_for_das += 1;
             if can_single_move {
-                self.side_move_signed(sign);
+                if self.side_move_signed(sign) {
+                    moved = true
+                }
             } else if can_das {
                 self.side_movement_accumulator += (sign as f64) / self.config.game_params.arr;
-
                 let mut abs = self.side_movement_accumulator.abs();
                 let sign = self.side_movement_accumulator.signum();
-
                 if abs >= 1.0 {
                     loop {
-                        self.side_move_signed(sign);
+                        if self.side_move_signed(sign) {
+                            moved = true
+                        }
 
                         abs -= 1.0;
                         if abs < 1.0 {
@@ -371,13 +370,15 @@ impl App {
                 self.side_movement_accumulator = abs * sign;
             }
         }
+
+        moved
     }
 
-    fn side_move_signed<T: Into<f64>>(&mut self, sign: T) {
+    fn side_move_signed<T: Into<f64>>(&mut self, sign: T) -> bool {
         if sign.into() > 0.0 {
-            self.move_right();
+            self.move_right()
         } else {
-            self.move_left();
+            self.move_left()
         }
     }
 
@@ -419,17 +420,23 @@ impl App {
         self.pause = false;
     }
 
-    pub fn move_left(&mut self) {
+    pub fn move_left(&mut self) -> bool {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_left(&self.board) {
             self.last_move = Moves::SIDE;
+            true
+        } else {
+            false
         }
     }
 
-    pub fn move_right(&mut self) {
+    pub fn move_right(&mut self) -> bool {
         let piece = self.piece.as_mut().unwrap();
         if piece.try_move_right(&self.board) {
             self.last_move = Moves::SIDE;
+            true
+        } else {
+            false
         }
     }
 

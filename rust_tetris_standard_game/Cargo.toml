@@ -8,7 +8,7 @@ edition = "2018"
 ggez = "0.5.1"
 rand = "0.7.3"
 log = { version = "0.4.11", features = [
-    "max_level_debug",
+    "max_level_trace",
     "release_max_level_warn"
 ] }
 env_logger = "0.8.1"
