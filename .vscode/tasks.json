@@ -4,11 +4,16 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "powershell",
-            "args": [
-                "${workspaceFolder}/scripts/build.ps1",
-                "debug"
-            ],
+            "linux": {
+                "command": "${workspaceFolder}/scripts/build debug",
+            },
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "${workspaceFolder}/scripts/build.ps1",
+                    "debug"
+                ],
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -18,32 +23,47 @@
         {
             "label": "Run",
             "type": "shell",
-            "command": "powershell",
-            "args": [
-                "${workspaceFolder}/scripts/run.ps1",
-                "debug"
-            ],
+            "linux": {
+                "command": "${workspaceFolder}/scripts/run debug",
+            },
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "${workspaceFolder}/scripts/run.ps1",
+                    "debug"
+                ],
+            },
             "problemMatcher": []
         },
         {
             "label": "Build Release",
             "type": "shell",
-            "command": "powershell",
-            "args": [
-                "${workspaceFolder}/scripts/build.ps1",
-                "release"
-            ],
+            "linux": {
+                "command": "${workspaceFolder}/scripts/build release",
+            },
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "${workspaceFolder}/scripts/build.ps1",
+                    "release"
+                ],
+            },
             "group": "build",
             "problemMatcher": []
         },
         {
             "label": "Run release",
             "type": "shell",
-            "command": "powershell",
-            "args": [
-                "${workspaceFolder}/scripts/run.ps1",
-                "release"
-            ],
+            "linux": {
+                "command": "${workspaceFolder}/scripts/run release",
+            },
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "${workspaceFolder}/scripts/run.ps1",
+                    "release"
+                ],
+            },
             "problemMatcher": []
         },
         {
