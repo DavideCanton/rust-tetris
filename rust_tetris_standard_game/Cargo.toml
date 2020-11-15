@@ -18,4 +18,5 @@ serde_plain = "0.3.0"
 toml = "0.5.7"
 rust_tetris_core = { path = "../rust_tetris_core" }
 rust_tetris_ui_core = { path = "../rust_tetris_ui_core" }
+gilrs = { version = "0.7.4", features = ["serde"] }
 winit = { version = "0.19", features = ["serde"] }

@@ -6,12 +6,12 @@ arr = 2.0
 lock_delay = 30
 
 [keys]
-left = { keyboard = "Left" }
-right = { keyboard = "Right" }
-next_rotation = { keyboard = "X" }
-prev_rotation = { keyboard = "Z" }
-pause = { keyboard = "Return" }
-soft_drop = { keyboard = "Down" }
-hard_drop = { keyboard = "Up" }
-hold = { keyboard = "C" }
-quit = { keyboard = "Escape" }
+left = { keyboard = ["Left"], gamepad = ["DPadLeft"] }
+right = { keyboard = ["Right"], gamepad = ["DPadRight"] }
+next_rotation = { keyboard = ["X"], gamepad = ["East"] }
+prev_rotation = { keyboard = ["Z"], gamepad = ["South"] }
+pause = { keyboard = ["Return"], gamepad = ["Start"] }
+soft_drop = { keyboard = ["Down"], gamepad = ["DPadDown"] }
+hard_drop = { keyboard = ["Up"], gamepad = ["DPadUp"] }
+hold = { keyboard = ["C"], gamepad = ["RightTrigger"] }
+quit = { keyboard = ["Escape"], gamepad = ["RightTrigger2"] }

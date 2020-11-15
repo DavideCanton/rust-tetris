@@ -1,4 +1,5 @@
-use ggez::input::keyboard::KeyCode;
+use ggez::{event::Button, input::keyboard::KeyCode};
+
 use serde_derive::Deserialize;
 use std::collections::HashSet;
 
@@ -25,7 +26,7 @@ pub struct GameParamsConfig {
     pub soft_drop_factor: f64,
     pub das: f64,
     pub arr: f64,
-    pub lock_delay: u32
+    pub lock_delay: u32,
 }
 
 impl Validable for GameParamsConfig {
@@ -78,11 +79,13 @@ impl Validable for KeysConfig {
 
         let keys_vec = children
             .iter()
-            .map(|c| c.keyboard)
-            .filter(|o| o.is_some())
-            .map(|o| o.unwrap())
+            .flat_map(|c| c.keyboard.as_ref())
+            .flat_map(|v| v)
             .collect::<Vec<_>>();
         let keys_set = keys_vec.iter().collect::<HashSet<_>>();
+
+        // TODO detect gamepad duplicate
+        // TODO log duplicate key
 
         if keys_set.len() != keys_vec.len() {
             panic!("Duplicate keys!");
@@ -92,14 +95,18 @@ impl Validable for KeysConfig {
 
 #[derive(Deserialize, Debug)]
 pub struct KeyConfig {
-    pub keyboard: Option<KeyCode>,
-    pub gamepad: Option<String>,
+    pub keyboard: Option<Vec<KeyCode>>,
+    pub gamepad: Option<Vec<Button>>,
 }
 
 impl Validable for KeyConfig {
     fn validate(&self) {
+        // TODO improve this code
         match (self.keyboard.as_ref(), self.gamepad.as_ref()) {
             (None, None) => panic!("One between keyboard and gamepad should be provided"),
+            (Some(v), None) if v.len() == 0 => panic!("No key configured"),
+            (None, Some(v2)) if v2.len() == 0 => panic!("No key configured"),
+            (Some(v), Some(v2)) if v.len() == 0 || v2.len() == 0 => panic!("No key configured"),
             _ => {}
         }
     }
