@@ -3,8 +3,10 @@ use ggez::{event::Button, input::keyboard::KeyCode};
 use serde_derive::Deserialize;
 use std::collections::HashSet;
 
+type ValidationResult = Result<(), String>;
+
 pub trait Validable {
-    fn validate(&self);
+    fn validate(&self) -> ValidationResult;
 }
 
 #[derive(Deserialize, Debug)]
@@ -14,9 +16,10 @@ pub struct GameConfig {
 }
 
 impl Validable for GameConfig {
-    fn validate(&self) {
-        self.game_params.validate();
-        self.keys.validate();
+    fn validate(&self) -> ValidationResult {
+        self.game_params.validate()?;
+        self.keys.validate()?;
+        Ok(())
     }
 }
 
@@ -30,18 +33,17 @@ pub struct GameParamsConfig {
 }
 
 impl Validable for GameParamsConfig {
-    fn validate(&self) {
+    fn validate(&self) -> ValidationResult {
         if self.gravity <= 0.0 {
-            panic!("Invalid gravity");
-        }
-        if self.soft_drop_factor <= 0.0 {
-            panic!("Invalid soft_drop_factor");
-        }
-        if self.das <= 0.0 {
-            panic!("Invalid das");
-        }
-        if self.arr <= 0.0 {
-            panic!("Invalid arr");
+            Err(String::from("Invalid gravity"))
+        } else if self.soft_drop_factor <= 0.0 {
+            Err(String::from("Invalid soft_drop_factor"))
+        } else if self.das <= 0.0 {
+            Err(String::from("Invalid das"))
+        } else if self.arr <= 0.0 {
+            Err(String::from("Invalid arr"))
+        } else {
+            Ok(())
         }
     }
 }
@@ -60,35 +62,45 @@ pub struct KeysConfig {
 }
 
 impl Validable for KeysConfig {
-    fn validate(&self) {
+    fn validate(&self) -> ValidationResult {
         let children = vec![
-            &self.left,
-            &self.right,
-            &self.next_rotation,
-            &self.prev_rotation,
-            &self.pause,
-            &self.soft_drop,
-            &self.hard_drop,
-            &self.hold,
-            &self.quit,
+            ("left", &self.left),
+            ("right", &self.right),
+            ("next_rotation", &self.next_rotation),
+            ("prev_rotation", &self.prev_rotation),
+            ("pause", &self.pause),
+            ("soft_drop", &self.soft_drop),
+            ("hard_drop", &self.hard_drop),
+            ("hold", &self.hold),
+            ("quit", &self.quit),
         ];
 
-        for child in &children {
-            child.validate();
+        for (name, child) in &children {
+            child.validate().map_err(|s| format!("{}: {}", name, s))?;
         }
 
         let keys_vec = children
             .iter()
-            .flat_map(|c| c.keyboard.as_ref())
+            .flat_map(|(_, c)| c.keyboard.as_ref())
             .flat_map(|v| v)
             .collect::<Vec<_>>();
         let keys_set = keys_vec.iter().collect::<HashSet<_>>();
 
-        // TODO detect gamepad duplicate
+        let gamepad_vec = children
+            .iter()
+            .flat_map(|(_, c)| c.gamepad.as_ref())
+            .flat_map(|v| v)
+            .collect::<Vec<_>>();
+        let gamepad_set = gamepad_vec.iter().collect::<HashSet<_>>();
+
         // TODO log duplicate key
 
         if keys_set.len() != keys_vec.len() {
-            panic!("Duplicate keys!");
+            Err(String::from("Duplicate keys!"))
+        } else if gamepad_set.len() != gamepad_vec.len() {
+            Err(String::from("Duplicate pad!"))
+        } else {
+            Ok(())
         }
     }
 }
@@ -100,14 +112,19 @@ pub struct KeyConfig {
 }
 
 impl Validable for KeyConfig {
-    fn validate(&self) {
-        // TODO improve this code
-        match (self.keyboard.as_ref(), self.gamepad.as_ref()) {
-            (None, None) => panic!("One between keyboard and gamepad should be provided"),
-            (Some(v), None) if v.len() == 0 => panic!("No key configured"),
-            (None, Some(v2)) if v2.len() == 0 => panic!("No key configured"),
-            (Some(v), Some(v2)) if v.len() == 0 || v2.len() == 0 => panic!("No key configured"),
-            _ => {}
+    fn validate(&self) -> ValidationResult {
+        fn get_size<T>(o: &Option<Vec<T>>) -> usize {
+            o.as_ref().map(|v| v.len()).unwrap_or(0)
+        }
+
+        let kb_len = get_size(&self.keyboard);
+        let gpad_len = get_size(&self.gamepad);
+
+        match (kb_len, gpad_len) {
+            (0, 0) => Err(String::from(
+                "One between keyboard and gamepad should be provided",
+            )),
+            _ => Ok(()),
         }
     }
 }

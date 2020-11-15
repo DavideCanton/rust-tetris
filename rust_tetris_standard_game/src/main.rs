@@ -71,7 +71,7 @@ fn main() {
         })
         .unwrap();
     let config: GameConfig = toml::from_str(&conf_str).expect("Conf load error");
-    config.validate();
+    config.validate().unwrap();
     debug!("Config: {:?}", config);
 
     let rc_config = Rc::new(config);
