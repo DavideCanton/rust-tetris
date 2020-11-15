@@ -36,7 +36,7 @@ enum SideMoves {
     RIGHT,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum ScoreType {
     TSpinSingle,
     TSpinDouble,
@@ -44,6 +44,17 @@ enum ScoreType {
     TSpinMini,
     Tetris,
     AllClear,
+    Single,
+    Double,
+    Triple,
+}
+
+fn is_b2b_worth(s: ScoreType) -> bool {
+    use ScoreType::*;
+    match s {
+        Single | Double | Triple => false,
+        _ => true,
+    }
 }
 
 pub struct App {
@@ -162,12 +173,15 @@ impl App {
 
         if let Some(last_point) = self.last_score.as_ref() {
             let msg = String::from(match last_point {
-                ScoreType::TSpinSingle => "T-Spin Singolo!",
-                ScoreType::TSpinDouble => "T-Spin Doppio!",
-                ScoreType::TSpinTriple => "T-Spin Triplo!",
+                ScoreType::TSpinSingle => "T-Spin Single!",
+                ScoreType::TSpinDouble => "T-Spin Double!",
+                ScoreType::TSpinTriple => "T-Spin Triple!",
                 ScoreType::TSpinMini => "T-Spin Mini!",
                 ScoreType::Tetris => "Tetris!",
                 ScoreType::AllClear => "All Clear!",
+                ScoreType::Single => "Single!",
+                ScoreType::Double => "Double!",
+                ScoreType::Triple => "Triple!",
             });
 
             drawer.draw_score_text(&msg)?;
@@ -216,9 +230,16 @@ impl App {
 
         let last = self.last_score.take();
 
-        if completed_rows == 4 {
-            debug!("Tetris detected");
-            self.last_score = Some(ScoreType::Tetris);
+        if completed_rows >= 2 && completed_rows <= 4 {
+            self.last_score = match completed_rows {
+                2 => Some(ScoreType::Double),
+                3 => Some(ScoreType::Triple),
+                4 => {
+                    debug!("Tetris detected");
+                    Some(ScoreType::Tetris)
+                }
+                _ => unreachable!(),
+            }
         } else if piece_with_position.tetris_piece_ref().piece_type == PlayableTetrisPieceType::T {
             // detect T-spin
 
@@ -255,7 +276,10 @@ impl App {
             }
         }
 
-        let is_b2b = completed_rows > 0 && last.is_some() && self.last_score.is_some();
+        let is_b2b = completed_rows > 0
+            && last.is_some()
+            && self.last_score.is_some()
+            && is_b2b_worth(self.last_score.unwrap());
         trace!("B2B detected? {}", is_b2b);
 
         if is_b2b {
