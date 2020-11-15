@@ -48,20 +48,16 @@ impl TetrisPiece {
         self.board.rows
     }
 
-    pub fn all_cells(&self) -> Box<dyn Iterator<Item = (isize, isize)> + '_> {
+    pub fn all_cells(&self) -> impl Iterator<Item = (isize, isize)> {
         let w = self.width();
         let h = self.height();
 
-        let iter = (0..h).flat_map(move |i| (0..w).map(move |j| (i, j)));
-        Box::new(iter)
+        (0..h).flat_map(move |i| (0..w).map(move |j| (i, j)))
     }
 
-    pub fn set_cells(&self) -> Box<dyn Iterator<Item = (isize, isize)> + '_> {
-        let iter = self
-            .all_cells()
-            .filter(move |&(i, j)| self.board.is_set(i, j));
-
-        Box::new(iter)
+    pub fn set_cells(&self) -> impl Iterator<Item = (isize, isize)> + '_ {
+        self.all_cells()
+            .filter(move |&(i, j)| self.board.is_set(i, j))
     }
 
     pub fn collides_left(&self, row: isize, col: isize, matrix: &TetrisBoard) -> bool {
@@ -133,37 +129,38 @@ impl TetrisPiece {
             (TetrisPieceRotation::LEFT, TetrisPieceRotation::TWO) => 5,
             (TetrisPieceRotation::LEFT, TetrisPieceRotation::ZERO) => 6,
             (TetrisPieceRotation::ZERO, TetrisPieceRotation::LEFT) => 7,
-            _ => panic!(),
+            _ => unreachable!(),
         };
 
-        let kicks: &[Kick] = match self.piece_type {
+        match self.piece_type {
             PlayableTetrisPieceType::I => &I_KICKS[kick_index],
             PlayableTetrisPieceType::O => &[(0, 0)],
             _ => &DEFAULT_KICKS[kick_index],
-        };
-
-        kicks
+        }
     }
+}
 
-    pub fn fill_piece_matrix(
-        piece: PlayableTetrisPieceType,
-        matrix: &mut TetrisBoard,
-        rotation: TetrisPieceRotation,
-    ) {
-        let matrix_str = get_rotations(piece, rotation);
+fn fill_piece_matrix(
+    piece: PlayableTetrisPieceType,
+    matrix: &mut TetrisBoard,
+    rotation: TetrisPieceRotation,
+) {
+    let matrix_bytes = get_rotations(piece, rotation);
+    let cols = matrix.cols;
 
-        for (row, row_vec) in matrix_str.split('|').zip(matrix.rows_mut()) {
-            for (ch, col) in row.chars().zip(row_vec) {
-                let ch = match ch {
-                    '0' => None,
-                    '1' => Some(piece),
-                    _ => panic!(),
-                };
+    for (row, row_vec) in matrix_bytes.into_iter().zip(matrix.rows_mut()) {
+        let mut acc = 1u8 << (cols - 1);
+        for col in row_vec {
+            let ch = match row & acc {
+                0 => None,
+                _ => Some(piece),
+            };
 
-                *col = ch
-                    .map(playable_piece_to_cell)
-                    .unwrap_or(TetrisCell::EmptyCell)
-            }
+            *col = ch
+                .map(playable_piece_to_cell)
+                .unwrap_or(TetrisCell::EmptyCell);
+
+            acc = acc >> 1;
         }
     }
 }
@@ -173,7 +170,7 @@ fn get_piece_matrix(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotatio
 
     let mut matrix = TetrisBoard::new(r, c);
 
-    TetrisPiece::fill_piece_matrix(piece, &mut matrix, rotation);
+    fill_piece_matrix(piece, &mut matrix, rotation);
 
     matrix
 }
@@ -186,74 +183,81 @@ fn get_piece_size(piece: PlayableTetrisPieceType) -> (isize, isize) {
     }
 }
 
-fn get_rotations(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> &'static str {
-    match piece {
-        PlayableTetrisPieceType::O => get_rotations_o(),
-        PlayableTetrisPieceType::I => get_rotations_i(rotation),
-        PlayableTetrisPieceType::Z => get_rotations_z(rotation),
-        PlayableTetrisPieceType::S => get_rotations_s(rotation),
-        PlayableTetrisPieceType::J => get_rotations_j(rotation),
-        PlayableTetrisPieceType::L => get_rotations_l(rotation),
-        PlayableTetrisPieceType::T => get_rotations_t(rotation),
-    }
+fn get_rotations(piece: PlayableTetrisPieceType, rotation: TetrisPieceRotation) -> Vec<u8> {
+    piece!(
+        piece,
+        O => get_rotations_o(rotation),
+        I => get_rotations_i(rotation),
+        Z => get_rotations_z(rotation),
+        S => get_rotations_s(rotation),
+        J => get_rotations_j(rotation),
+        L => get_rotations_l(rotation),
+        T => get_rotations_t(rotation),
+    )
 }
 
-fn get_rotations_o() -> &'static str {
-    "0110|0110|0000"
+fn get_rotations_o(rotation: TetrisPieceRotation) -> Vec<u8> {
+    same_rotation!(rotation, [6, 6, 0])
 }
 
-fn get_rotations_i(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "0000|1111|0000|0000",
-        TetrisPieceRotation::RIGHT => "0010|0010|0010|0010",
-        TetrisPieceRotation::TWO => "0000|0000|1111|0000",
-        TetrisPieceRotation::LEFT => "0100|0100|0100|0100",
-    }
+fn get_rotations_i(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [0, 15, 0, 0],
+        R => [2, 2, 2, 2],
+        T => [0, 0, 15, 0],
+        L => [4, 4, 4, 4]
+    )
 }
 
-fn get_rotations_z(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "110|011|000",
-        TetrisPieceRotation::RIGHT => "001|011|010",
-        TetrisPieceRotation::TWO => "000|110|011",
-        TetrisPieceRotation::LEFT => "010|110|100",
-    }
+fn get_rotations_z(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [6, 3, 0],
+        R => [1, 3, 2],
+        T => [0, 6, 3],
+        L => [2, 6, 4]
+    )
 }
 
-fn get_rotations_s(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "011|110|000",
-        TetrisPieceRotation::RIGHT => "010|011|001",
-        TetrisPieceRotation::TWO => "000|011|110",
-        TetrisPieceRotation::LEFT => "100|110|010",
-    }
+fn get_rotations_s(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [3, 6, 0],
+        R => [2, 3, 1],
+        T => [0, 3, 6],
+        L => [4, 6, 2]
+    )
 }
 
-fn get_rotations_j(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "100|111|000",
-        TetrisPieceRotation::RIGHT => "011|010|010",
-        TetrisPieceRotation::TWO => "000|111|001",
-        TetrisPieceRotation::LEFT => "010|010|110",
-    }
+fn get_rotations_j(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [4, 7, 0],
+        R => [3, 2, 2],
+        T => [0, 7, 1],
+        L => [2, 2, 6]
+    )
 }
 
-fn get_rotations_l(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "001|111|000",
-        TetrisPieceRotation::RIGHT => "010|010|011",
-        TetrisPieceRotation::TWO => "000|111|100",
-        TetrisPieceRotation::LEFT => "110|010|010",
-    }
+fn get_rotations_l(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [1, 7, 0],
+        R => [2, 2, 3],
+        T => [0, 7, 4],
+        L => [6, 2, 2]
+    )
 }
 
-fn get_rotations_t(rotation: TetrisPieceRotation) -> &'static str {
-    match rotation {
-        TetrisPieceRotation::ZERO => "010|111|000",
-        TetrisPieceRotation::RIGHT => "010|011|010",
-        TetrisPieceRotation::TWO => "000|111|010",
-        TetrisPieceRotation::LEFT => "010|110|010",
-    }
+fn get_rotations_t(rotation: TetrisPieceRotation) -> Vec<u8> {
+    rotations!(
+        rotation,
+        Z => [2, 7, 0],
+        R => [2, 3, 2],
+        T => [0, 7, 2],
+        L => [2, 6, 2]
+    )
 }
 
 #[cfg(test)]

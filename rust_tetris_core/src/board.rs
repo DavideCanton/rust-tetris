@@ -49,8 +49,12 @@ impl TetrisBoard {
         self.data[i as usize][j as usize]
     }
 
+    pub fn is_in_bounds(&self, i: isize, j: isize) -> bool {
+        !(i >= self.rows || j >= self.cols || i < 0 || j < 0)
+    }
+
     pub fn is_set(&self, i: isize, j: isize) -> bool {
-        if i >= self.rows || j >= self.cols || i < 0 || j < 0 {
+        if !self.is_in_bounds(i, j) {
             false
         } else {
             is_filled(self.data[i as usize][j as usize])
@@ -122,12 +126,11 @@ impl TetrisBoard {
     }
 
     pub fn remove_rows(&mut self, from: isize, to: isize, last_to_copy: Option<isize>) {
-        let offset = from - to;
-
-        if offset == 0 {
+        if from == to {
             return;
         }
 
+        let offset = from - to;
         let last_to_copy = last_to_copy.unwrap_or(offset);
         let last_to_copy_rev = self.rows - last_to_copy;
 
@@ -141,25 +144,18 @@ impl TetrisBoard {
     }
 
     pub fn get_first_set_col(&self) -> Option<isize> {
-        for j in 0..self.cols {
-            for i in 0..self.rows {
-                if self.is_set(i, j) {
-                    return Some(j);
-                }
-            }
-        }
-        None
+        (0..self.cols)
+            .flat_map(|j| (0..self.rows).map(move |i| (i, j)))
+            .find(|&(i, j)| self.is_set(i, j))
+            .map(|(_, j)| j)
     }
 
     pub fn get_last_set_col(&self) -> Option<isize> {
-        for j in (0..self.cols).rev() {
-            for i in 0..self.rows {
-                if self.is_set(i, j) {
-                    return Some(j);
-                }
-            }
-        }
-        None
+        (0..self.cols)
+            .rev()
+            .flat_map(|j| (0..self.rows).map(move |i| (i, j)))
+            .find(|&(i, j)| self.is_set(i, j))
+            .map(|(_, j)| j)
     }
 }
 
@@ -197,7 +193,7 @@ mod tests {
                     i % c,
                     TetrisPieceType::Playable(PlayableTetrisPieceType::O),
                 ),
-                _ => panic!(),
+                _ => unreachable!(),
             }
         }
     }

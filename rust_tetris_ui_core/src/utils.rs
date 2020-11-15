@@ -3,6 +3,7 @@ use ggez::graphics::Color;
 use rust_tetris_core::{
     constants::Kick,
     enums::{PlayableTetrisPieceType, TetrisPieceType},
+    piece,
 };
 
 pub const R: isize = 20;
@@ -54,15 +55,16 @@ pub fn piece_to_color(p: TetrisPieceType, is_shadow: bool) -> Color {
 }
 
 pub fn playable_piece_to_color(p: PlayableTetrisPieceType, is_shadow: bool) -> Color {
-    let original_color = match p {
-        PlayableTetrisPieceType::O => O_COLOR,
-        PlayableTetrisPieceType::I => I_COLOR,
-        PlayableTetrisPieceType::S => S_COLOR,
-        PlayableTetrisPieceType::Z => Z_COLOR,
-        PlayableTetrisPieceType::T => T_COLOR,
-        PlayableTetrisPieceType::L => L_COLOR,
-        PlayableTetrisPieceType::J => J_COLOR,
-    };
+    let original_color = piece!(
+        p,
+        O => O_COLOR,
+        I => I_COLOR,
+        Z => Z_COLOR,
+        S => S_COLOR,
+        J => J_COLOR,
+        L => L_COLOR,
+        T => T_COLOR,
+    );
 
     apply_shadow(original_color, is_shadow)
 }
@@ -73,7 +75,29 @@ pub fn is_not_empty(kick: Kick) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;    
+    use super::*;
+
+    fn get_pairs() -> Vec<(PlayableTetrisPieceType, Color)> {
+        vec![
+            (PlayableTetrisPieceType::I, I_COLOR),
+            (PlayableTetrisPieceType::O, O_COLOR),
+            (PlayableTetrisPieceType::S, S_COLOR),
+            (PlayableTetrisPieceType::Z, Z_COLOR),
+            (PlayableTetrisPieceType::L, L_COLOR),
+            (PlayableTetrisPieceType::J, J_COLOR),
+            (PlayableTetrisPieceType::T, T_COLOR),
+        ]
+    }
+
+    fn get_pairs_with_shadow() -> Vec<(PlayableTetrisPieceType, Color)> {
+        let mut pairs = get_pairs().clone();
+
+        for (_, c) in pairs.iter_mut() {
+            c.a = GHOST_ALPHA;
+        }
+
+        pairs
+    }
 
     #[test]
     fn test_is_not_empty() {
@@ -92,17 +116,7 @@ mod tests {
 
     #[test]
     fn test_playable_piece_to_color_no_shadow() {
-        let pairs = vec![
-            (PlayableTetrisPieceType::I, I_COLOR),
-            (PlayableTetrisPieceType::O, O_COLOR),
-            (PlayableTetrisPieceType::S, S_COLOR),
-            (PlayableTetrisPieceType::Z, Z_COLOR),
-            (PlayableTetrisPieceType::L, L_COLOR),
-            (PlayableTetrisPieceType::J, J_COLOR),
-            (PlayableTetrisPieceType::T, T_COLOR),
-        ];
-
-        for (piece, expected_color) in pairs {
+        for (piece, expected_color) in get_pairs() {
             let color = playable_piece_to_color(piece, false);
             assert_eq!(
                 color, expected_color,
@@ -114,21 +128,7 @@ mod tests {
 
     #[test]
     fn test_playable_piece_to_color_with_shadow() {
-        let mut pairs = vec![
-            (PlayableTetrisPieceType::I, I_COLOR),
-            (PlayableTetrisPieceType::O, O_COLOR),
-            (PlayableTetrisPieceType::S, S_COLOR),
-            (PlayableTetrisPieceType::Z, Z_COLOR),
-            (PlayableTetrisPieceType::L, L_COLOR),
-            (PlayableTetrisPieceType::J, J_COLOR),
-            (PlayableTetrisPieceType::T, T_COLOR),
-        ];
-
-        for (_, c) in pairs.iter_mut() {
-            c.a = GHOST_ALPHA;
-        }
-
-        for (piece, expected_color) in pairs {
+        for (piece, expected_color) in get_pairs_with_shadow() {
             let color = playable_piece_to_color(piece, true);
             assert_eq!(
                 color, expected_color,
@@ -140,17 +140,7 @@ mod tests {
 
     #[test]
     fn test_piece_to_color_no_shadow() {
-        let pairs = vec![
-            (PlayableTetrisPieceType::I, I_COLOR),
-            (PlayableTetrisPieceType::O, O_COLOR),
-            (PlayableTetrisPieceType::S, S_COLOR),
-            (PlayableTetrisPieceType::Z, Z_COLOR),
-            (PlayableTetrisPieceType::L, L_COLOR),
-            (PlayableTetrisPieceType::J, J_COLOR),
-            (PlayableTetrisPieceType::T, T_COLOR),
-        ];
-
-        for (piece, expected_color) in pairs {
+        for (piece, expected_color) in get_pairs() {
             let piece_type = TetrisPieceType::Playable(piece);
             let color = piece_to_color(piece_type, false);
             assert_eq!(
@@ -173,21 +163,7 @@ mod tests {
 
     #[test]
     fn test_piece_to_color_with_shadow() {
-        let mut pairs = vec![
-            (PlayableTetrisPieceType::I, I_COLOR),
-            (PlayableTetrisPieceType::O, O_COLOR),
-            (PlayableTetrisPieceType::S, S_COLOR),
-            (PlayableTetrisPieceType::Z, Z_COLOR),
-            (PlayableTetrisPieceType::L, L_COLOR),
-            (PlayableTetrisPieceType::J, J_COLOR),
-            (PlayableTetrisPieceType::T, T_COLOR),
-        ];
-
-        for (_, c) in pairs.iter_mut() {
-            c.a = GHOST_ALPHA;
-        }
-
-        for (piece, expected_color) in pairs {
+        for (piece, expected_color) in get_pairs_with_shadow() {
             let piece_type = TetrisPieceType::Playable(piece);
             let color = piece_to_color(piece_type, true);
             assert_eq!(
