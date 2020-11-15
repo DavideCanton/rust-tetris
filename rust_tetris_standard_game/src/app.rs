@@ -1,5 +1,6 @@
 use crate::GameConfig;
 use std::collections::VecDeque;
+use std::convert::TryInto;
 use std::rc::Rc;
 
 use ggez::{graphics, graphics::Font, timer, Context, GameResult};
@@ -104,7 +105,7 @@ impl App {
 
         self.initial_setup(&rows, &pieces);
         self.fill_buffer();
-        self.next_block();
+        self.next_block(None);
     }
 
     fn initial_setup(&mut self, rows: &[&str], pieces: &[PlayableTetrisPieceType]) {
@@ -267,7 +268,7 @@ impl App {
             debug!("B2B level: {}", self.back_to_back);
         }
 
-        self.board.remove_ranges(completed_rows_ranges, Some(20));
+        self.board.remove_ranges(completed_rows_ranges);
 
         if self.board.is_empty() {
             self.back_to_back = 0;
@@ -309,7 +310,7 @@ impl App {
             if self.lock_timer == self.config.game_params.lock_delay {
                 trace!("Reached limit of {}", self.config.game_params.lock_delay);
                 self.handle_finalize();
-                self.next_block();
+                self.next_block(None);
                 self.down_movement_accumulator = 0.0;
                 put_next_block = true;
             } else {
@@ -516,7 +517,7 @@ impl App {
         }
 
         self.handle_finalize();
-        self.next_block();
+        self.next_block(None);
 
         self.last_move = Moves::UP;
     }
@@ -532,7 +533,7 @@ impl App {
             }
 
             if self.piece.is_none() {
-                self.next_block();
+                self.next_block(None);
             }
 
             self.hold_piece.as_mut().unwrap().set_hold();
@@ -547,6 +548,14 @@ impl App {
 
     pub fn soft_drop_key_released(&mut self) {
         self.reset_drop();
+    }
+
+    pub fn remove_line(&mut self, line: usize) {
+        self.board.remove_row(line.try_into().unwrap())
+    }
+
+    pub fn set_current(&mut self, p: PlayableTetrisPieceType) {
+        self.next_block(Some(p));
     }
 
     fn new_block_in_buffer(&mut self) {
@@ -582,8 +591,11 @@ impl App {
         TetrisPieceWithPosition::new(0, C / 2 - 1, piece)
     }
 
-    fn next_block(&mut self) {
-        let piece = self.buffer_next_pieces.pop_back().unwrap();
+    fn next_block(&mut self, force_piece: Option<PlayableTetrisPieceType>) {
+        let piece = match force_piece {
+            None => self.buffer_next_pieces.pop_back().unwrap(),
+            Some(p) => TetrisPiece::new(p),
+        };
         self.piece = Some(App::build_piece_with_pos(piece));
         self.new_block_in_buffer();
         self.reset_drop();

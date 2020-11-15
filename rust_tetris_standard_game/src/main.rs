@@ -26,6 +26,7 @@ use crate::{
 mod app;
 mod conf;
 mod controller;
+mod controller_structs;
 mod types;
 
 fn init_log() {

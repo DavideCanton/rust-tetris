@@ -111,9 +111,9 @@ impl TetrisBoard {
         ranges
     }
 
-    pub fn remove_ranges(&mut self, ranges: Vec<(isize, isize)>, last_to_copy: Option<isize>) {
+    pub fn remove_ranges(&mut self, ranges: Vec<(isize, isize)>) {
         for range in &ranges {
-            self.remove_rows(range.0, range.1, last_to_copy);
+            self.remove_rows(range.0, range.1);
         }
     }
 
@@ -125,13 +125,17 @@ impl TetrisBoard {
         self.data.iter_mut()
     }
 
-    pub fn remove_rows(&mut self, from: isize, to: isize, last_to_copy: Option<isize>) {
+    pub fn remove_row(&mut self, row: isize) {
+        self.remove_rows(row, row - 1)
+    }
+
+    pub fn remove_rows(&mut self, from: isize, to: isize) {
         if from == to {
             return;
         }
 
         let offset = from - to;
-        let last_to_copy = last_to_copy.unwrap_or(offset);
+        let last_to_copy = self.rows;
         let last_to_copy_rev = self.rows - last_to_copy;
 
         for i in ((to + 1)..=from).rev() {
@@ -208,7 +212,7 @@ mod tests {
         println!("-----------");
 
         let ranges = board.completed_rows();
-        board.remove_ranges(ranges, Some(5));
+        board.remove_ranges(ranges);
 
         println!("{:?}", board);
         println!("-----------");
@@ -234,7 +238,7 @@ mod tests {
         println!("-----------");
 
         let ranges = board.completed_rows();
-        board.remove_ranges(ranges, Some(5));
+        board.remove_ranges(ranges);
 
         println!("{:?}", board);
         println!("-----------");
