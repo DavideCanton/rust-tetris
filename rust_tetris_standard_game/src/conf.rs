@@ -155,14 +155,14 @@ fn get_messages<T: Debug>(map: HashMap<&T, Vec<ConfigWithName>>) -> Vec<Validati
 }
 
 fn get_duplicated_entries<'b, 'c, T: Hash + Eq, F: Fn(&KeyConfig) -> &Option<Vec<T>>>(
-    children: &'_ Vec<ConfigWithName<'b, 'c>>,
+    children: &[ConfigWithName<'b, 'c>],
     getter: F,
 ) -> HashMap<&'c T, Vec<ConfigWithName<'b, 'c>>> {
     // iterator of pairs (key, keyconfig in file)
-    let iter = children.into_iter().flat_map(|&(k, c)| {
+    let iter = children.iter().flat_map(|&(k, c)| {
         getter(c)
-            .into_iter()
-            .flat_map(|cc| cc.into_iter().map(|x| (x, (k, c))))
+            .iter()
+            .flat_map(|cc| cc.iter().map(|x| (x, (k, c))))
             .collect::<Vec<_>>()
     });
 

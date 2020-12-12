@@ -160,7 +160,7 @@ fn fill_piece_matrix(
                 .map(playable_piece_to_cell)
                 .unwrap_or(TetrisCell::EmptyCell);
 
-            acc = acc >> 1;
+            acc >>= 1;
         }
     }
 }

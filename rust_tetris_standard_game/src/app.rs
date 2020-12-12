@@ -51,10 +51,7 @@ enum ScoreType {
 
 fn is_b2b_worth(s: ScoreType) -> bool {
     use ScoreType::*;
-    match s {
-        Single | Double | Triple => false,
-        _ => true,
-    }
+    !matches!(s, Single | Double | Triple)
 }
 
 pub struct App {
@@ -139,13 +136,13 @@ impl App {
         }
     }
 
-    fn get_shadow_row_index(&self, pieceInfo: &TetrisPieceWithPosition) -> Option<isize> {
+    fn get_shadow_row_index(&self, piece_info: &TetrisPieceWithPosition) -> Option<isize> {
         if self.pause {
             None
         } else {
-            let mut shadow_row = pieceInfo.row();
+            let mut shadow_row = piece_info.row();
 
-            while !pieceInfo.collides_on_next_with_row(shadow_row, &self.board) {
+            while !piece_info.collides_on_next_with_row(shadow_row, &self.board) {
                 shadow_row += 1;
             }
 
@@ -321,11 +318,9 @@ impl App {
         let grounded = piece.collides_on_next(&self.board);
         let mut put_next_block = false;
 
-        if self.just_placed {
-            if grounded {
-                println!("Game over!");
-                return Ok(TetrisUpdateResult::GameOver);
-            }
+        if self.just_placed && grounded {
+            println!("Game over!");
+            return Ok(TetrisUpdateResult::GameOver);
         }
         self.just_placed = false;
 
