@@ -227,17 +227,7 @@ impl App {
 
         let last = self.last_score.take();
 
-        if completed_rows >= 2 && completed_rows <= 4 {
-            self.last_score = match completed_rows {
-                2 => Some(ScoreType::Double),
-                3 => Some(ScoreType::Triple),
-                4 => {
-                    debug!("Tetris detected");
-                    Some(ScoreType::Tetris)
-                }
-                _ => unreachable!(),
-            }
-        } else if piece_with_position.tetris_piece_ref().piece_type == PlayableTetrisPieceType::T {
+        if piece_with_position.tetris_piece_ref().piece_type == PlayableTetrisPieceType::T {
             // detect T-spin
 
             if completed_rows > 0 && self.last_move == Moves::ROTATE {
@@ -270,6 +260,16 @@ impl App {
 
                     debug!("Score computed: {:?}", self.last_score);
                 }
+            }
+        } else if completed_rows >= 2 && completed_rows <= 4 {
+            self.last_score = match completed_rows {
+                2 => Some(ScoreType::Double),
+                3 => Some(ScoreType::Triple),
+                4 => {
+                    debug!("Tetris detected");
+                    Some(ScoreType::Tetris)
+                }
+                _ => unreachable!(),
             }
         }
 
