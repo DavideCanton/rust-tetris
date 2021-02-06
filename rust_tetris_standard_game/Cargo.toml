@@ -7,10 +7,7 @@ edition = "2018"
 [dependencies]
 ggez = "0.5.1"
 rand = "0.7.3"
-log = { version = "0.4.11", features = [
-    "max_level_debug",
-    "release_max_level_warn"
-] }
+log = { version = "0.4.11", features = [ "max_level_debug", "release_max_level_warn"] }
 env_logger = "0.8.1"
 serde = "1.0.117"
 serde_derive = "1.0.117"
